@@ -7,7 +7,7 @@ import com.vaadin.server.VaadinService;
 
 /**
  * This class contains the references to the icons and resources of the project
- * 
+ *
  * @author Pablo Casais Solano
  * @version 1.0
  * @since 1.0
@@ -24,7 +24,8 @@ public class GraphicResources {
     public static final FileResource ATLAS_ICON = new FileResource(new File(IMG_PATH + "atlas.png"));
     public static final FileResource SAVE_ICON = new FileResource(new File(IMG_PATH + "save.png"));
     public static final FileResource UPLOAD_ICON = new FileResource(new File(IMG_PATH + "upload.png"));
-    
+    public static final FileResource RUN_ICON = new FileResource(new File(IMG_PATH + "run.png"));
+
     private GraphicResources() {
     }
 }

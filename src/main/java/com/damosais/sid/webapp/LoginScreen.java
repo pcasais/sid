@@ -33,15 +33,15 @@ import com.vaadin.ui.VerticalLayout;
 public class LoginScreen extends VerticalLayout implements View {
     private static final long serialVersionUID = 7228771403828871451L;
     public static final String VIEW_NAME = "LoginScreen";
-    private final Logger LOGGER = Logger.getLogger(LoginScreen.class);
+    private static final Logger LOGGER = Logger.getLogger(LoginScreen.class);
     // The three fields used in this view
     private TextField userName;
     private PasswordField password;
     private Button loginButton;
-
+    
     @Autowired
     private UserService userService;
-
+    
     /**
      * The default constructor just adds the spacing and margins
      */
@@ -49,19 +49,19 @@ public class LoginScreen extends VerticalLayout implements View {
         setSpacing(true);
         setMargin(true);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         userName.focus();
     }
-    
+
     @PostConstruct
     void init() {
         // First we add the logo
         final Embedded logo = new Embedded(null, GraphicResources.SECURITY_LOGO);
         addComponent(logo);
         setComponentAlignment(logo, Alignment.MIDDLE_CENTER);
-        
+
         // Then we add the form with the user and password
         userName = new TextField("User Name");
         addComponent(userName);
@@ -69,7 +69,7 @@ public class LoginScreen extends VerticalLayout implements View {
         password = new PasswordField("Password");
         addComponent(password);
         setComponentAlignment(password, Alignment.MIDDLE_CENTER);
-        
+
         // Finally we add the button
         loginButton = new Button("Login", event -> {
             try {
@@ -87,7 +87,7 @@ public class LoginScreen extends VerticalLayout implements View {
                 final Notification error = new Notification("Internal error", "Problem while accessing the user repository: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE);
                 error.show(Page.getCurrent());
             }
-
+            
         });
         loginButton.setClickShortcut(KeyCode.ENTER);
         addComponent(loginButton);

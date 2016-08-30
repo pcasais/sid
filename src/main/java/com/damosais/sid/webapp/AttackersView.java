@@ -40,13 +40,13 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
     private BeanItemContainer<Attacker> container;
     private Button addEvent;
     private FilterTable table;
-
+    
     @Autowired
     private AttackerService attackerService;
-    
+
     @Autowired
     private AttackerWindow attackerWindow;
-    
+
     /**
      * The constructor just enables the spacing and margins on the layout
      */
@@ -54,7 +54,7 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
         setSpacing(true);
         setMargin(true);
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -73,7 +73,7 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
             }
         }
     }
-    
+
     private void createButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addEvent = new Button("Add attacker", this);
@@ -84,12 +84,12 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
         addComponent(hl);
         setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-
+    
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -109,7 +109,7 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the AttackersView we create the table and the buttons
      */
@@ -126,7 +126,7 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
         addComponent(table);
         setComponentAlignment(table, Alignment.TOP_CENTER);
     }
-    
+
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
@@ -150,7 +150,7 @@ public class AttackersView extends VerticalLayout implements View, ClickListener
         // Now we refresh the content
         refreshTableContent();
     }
-
+    
     /**
      * It refreshes the content of the table
      */

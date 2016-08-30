@@ -13,6 +13,7 @@ import com.damosais.sid.webapp.EventsView;
 import com.damosais.sid.webapp.GraphicResources;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup.CommitException;
+import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
@@ -34,13 +35,13 @@ public class EventWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(EventWindow.class);
     private static final long serialVersionUID = 8434835262821274799L;
     private final VerticalLayout content;
-
-    @Autowired
-    private TargetService targetService;
     
     @Autowired
-    private EventService eventService;
+    private TargetService targetService;
 
+    @Autowired
+    private EventService eventService;
+    
     /**
      * Creates a new window to add or edit events
      */
@@ -53,7 +54,7 @@ public class EventWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit an event
      *
@@ -68,26 +69,27 @@ public class EventWindow extends Window {
         final BeanFieldGroup<com.damosais.sid.database.beans.Event> binder = new BeanFieldGroup<>(com.damosais.sid.database.beans.Event.class);
         binder.setItemDataSource(eventForForm);
         binder.setBuffered(true);
-
+        
         // 2nd) We create the date field
         final PopupDateField dateField = new PopupDateField("Date", eventForForm.getDate());
         dateField.setDateFormat("yyyy-MM-dd HH:mm:ss");
+        dateField.setResolution(Resolution.SECOND);
         dateField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(dateField, "date");
         form.addComponent(dateField);
-
+        
         // 3rd) We create the combo box with all the actions
         final ComboBox actionField = new ComboBox("Action", Arrays.asList(Action.values()));
         actionField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(actionField, "action");
         form.addComponent(actionField);
-        
+
         // 4th) We create the combo box with the targets available
         final ComboBox targetField = new ComboBox("Target", targetService.list());
         targetField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(targetField, "target");
         form.addComponent(targetField);
-
+        
         // 5th) We create the save button
         final Button saveButton = new Button("Save", event -> {
             try {
@@ -104,14 +106,14 @@ public class EventWindow extends Window {
         });
         saveButton.setStyleName("link");
         saveButton.setIcon(GraphicResources.SAVE_ICON);
-        
+
         // 6th) We clear the content of the window and add the form and the save buttons
         content.removeAllComponents();
         content.addComponent(form);
         content.addComponent(saveButton);
         content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
     }
-    
+
     /**
      * Prepares the window to add a new event
      *
@@ -123,7 +125,7 @@ public class EventWindow extends Window {
         final com.damosais.sid.database.beans.Event newEvent = new com.damosais.sid.database.beans.Event();
         createEventForm(newEvent, eventsView);
     }
-    
+
     /**
      * Prepares the window to edit an existing event
      *

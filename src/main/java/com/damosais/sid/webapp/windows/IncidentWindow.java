@@ -16,9 +16,11 @@ import com.damosais.sid.webapp.IncidentsView;
 import com.damosais.sid.webapp.customfields.ListToSetConverter;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
 import com.vaadin.data.fieldgroup.FieldGroup.CommitException;
+import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
+import com.vaadin.ui.DateField;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.ListSelect;
 import com.vaadin.ui.Notification;
@@ -74,10 +76,16 @@ public class IncidentWindow extends Window {
         binder.setBuffered(true);
 
         // 2nd) We add the start date
-        form.addComponent(binder.buildAndBind("Start", "start"));
+        final DateField startField = (DateField) binder.buildAndBind("Start", "start");
+        startField.setDateFormat("yyyy-MM-dd HH:mm:ss");
+        startField.setResolution(Resolution.SECOND);
+        form.addComponent(startField);
         
         // 3rd) we add the end date
-        form.addComponent(binder.buildAndBind("End", "end"));
+        final DateField endField = (DateField) binder.buildAndBind("End", "end");
+        endField.setDateFormat("yyyy-MM-dd HH:mm:ss");
+        endField.setResolution(Resolution.SECOND);
+        form.addComponent(endField);
 
         // 4th) Then we add the name of the incident
         final TextField nameField = new TextField("Name");

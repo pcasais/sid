@@ -1,7 +1,16 @@
-target/classes/AppWidgetset.gwt.xml
-target/m2e-wtp/web-resources/META-INF/maven/com.damosais/sid/pom.xml
-target/classes/sidConfig/application.properties
-target/classes/com/damosais/sid/webapp/windows/AttackerWindow.class
-target/m2e-wtp/web-resources/META-INF/maven/com.damosais/sid/pom.properties
-target/classes/com/damosais/sid/webapp/windows/EventWindow.class
-target/classes/com/damosais/sid/database/beans/AccessComplexity.class
+*.class
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+# Target and bin folders
+target
+bin

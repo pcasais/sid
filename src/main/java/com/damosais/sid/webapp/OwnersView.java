@@ -40,6 +40,7 @@ import com.vaadin.ui.VerticalLayout;
  */
 @SpringView(name = OwnersView.VIEW_NAME)
 public class OwnersView extends VerticalLayout implements View, ColumnGenerator, ClickListener {
+    private static final String COUNTRY_NAME = "country.name";
     private static final long serialVersionUID = -3226311660570691680L;
     public static final String VIEW_NAME = "VictimScreen";
     private static final String EDIT_BUTTON = "editButton";
@@ -191,16 +192,16 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         targetsTable.addGeneratedColumn(DELETE_BUTTON, this);
         // Now we handle the containers
         ownersContainer = new BeanItemContainer<>(Owner.class);
-        ownersContainer.addNestedContainerProperty("country.name");
+        ownersContainer.addNestedContainerProperty(COUNTRY_NAME);
         ownersContainer.addNestedContainerProperty("sector.description");
         ownersTable.setContainerDataSource(ownersContainer);
         targetsContainer = new BeanItemContainer<>(Target.class);
-        targetsContainer.addNestedContainerProperty("country.name");
+        targetsContainer.addNestedContainerProperty(COUNTRY_NAME);
         targetsTable.setContainerDataSource(targetsContainer);
         // Now we define which columns are visible and what are going to be their names in the table header
-        ownersTable.setVisibleColumns(new Object[] { "name", "country.name", "sector.description", EDIT_BUTTON, DELETE_BUTTON });
+        ownersTable.setVisibleColumns(new Object[] { "name", COUNTRY_NAME, "sector.description", EDIT_BUTTON, DELETE_BUTTON });
         ownersTable.setColumnHeaders(new String[] { "Name", "Country", "Sector", "Edit", "Delete" });
-        targetsTable.setVisibleColumns(new Object[] { "siteName", "ips", "country.name", EDIT_BUTTON, DELETE_BUTTON });
+        targetsTable.setVisibleColumns(new Object[] { "siteName", "ips", COUNTRY_NAME, EDIT_BUTTON, DELETE_BUTTON });
         targetsTable.setColumnHeaders(new String[] { "Site name", "IPs", "country", "Edit", "Delete" });
         // We then align the buttons to the middle
         ownersTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
