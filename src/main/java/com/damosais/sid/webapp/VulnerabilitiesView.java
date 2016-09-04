@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.CVEDefinition;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.beans.Vulnerability;
 import com.damosais.sid.database.services.CVEDefinitionService;
 import com.damosais.sid.database.services.VulnerabilityService;
@@ -40,6 +42,8 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
     public static final String VIEW_NAME = "VulnerabilitiesScreen";
     private static final String EDIT_BUTTON = "editButton";
     private static final String DELETE_BUTTON = "deleteButton";
+    private static final String UPDATED_BY_NAME = "updatedBy.name";
+    private static final String CREATED_BY_NAME = "createdBy.name";
     private BeanItemContainer<Vulnerability> vulnerabilityContainer;
     private BeanItemContainer<CVEDefinition> cveContainer;
     private Button addVulnerability;
@@ -71,10 +75,11 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addVulnerability.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addVulnerability.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             vulnerabilityWindow.setAddMode(this);
             getUI().addWindow(vulnerabilityWindow);
-        } else if (addCVE.equals(button)) {
+        } else if (addCVE.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             cveWindow.setAddMode(this);
             getUI().addWindow(cveWindow);
         } else {
@@ -85,7 +90,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     vulnerabilityWindow.setEditMode(vulnerability, this);
                     getUI().addWindow(vulnerabilityWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     vulnerabilityService.delete(vulnerability);
                     refreshVulnerabilitiesTableContent();
                 }
@@ -94,7 +99,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     cveWindow.setEditMode(definition, this);
                     getUI().addWindow(cveWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     cveDefinitionService.delete(definition);
                     refreshCVEsTableContent();
                 }
@@ -187,14 +192,18 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         // Now we handle the containers
         vulnerabilityContainer = new BeanItemContainer<>(Vulnerability.class);
         vulnerabilityContainer.addNestedContainerProperty("definition.name");
+        vulnerabilityContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        vulnerabilityContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         vulnerabilityTable.setContainerDataSource(vulnerabilityContainer);
         cveContainer = new BeanItemContainer<>(CVEDefinition.class);
+        cveContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        cveContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         cveTable.setContainerDataSource(cveContainer);
         // Now we define which columns are visible and what are going to be their names in the table header
-        vulnerabilityTable.setVisibleColumns(new Object[] { "definition.name", "type", "notes", EDIT_BUTTON, DELETE_BUTTON });
-        vulnerabilityTable.setColumnHeaders(new String[] { "CVE Name", "Type", "Notes", "Edit", "Delete" });
-        cveTable.setVisibleColumns(new Object[] { "name", "published", "cveDesc", "severity", "cvssBaseScore", EDIT_BUTTON, DELETE_BUTTON });
-        cveTable.setColumnHeaders(new String[] { "name", "Published", "Description", "Severity", "CVSS Base Score", "Edit", "Delete" });
+        vulnerabilityTable.setVisibleColumns(new Object[] { "definition.name", "type", "notes", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        vulnerabilityTable.setColumnHeaders(new String[] { "CVE Name", "Type", "Notes", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
+        cveTable.setVisibleColumns(new Object[] { "name", "published", "cveDesc", "severity", "cvssBaseScore", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        cveTable.setColumnHeaders(new String[] { "Name", "Published", "Description", "Severity", "CVSS Base Score", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
         // We then align the buttons to the middle
         vulnerabilityTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         vulnerabilityTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);

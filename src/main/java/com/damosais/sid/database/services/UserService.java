@@ -4,16 +4,20 @@ import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.util.Base64;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.security.auth.login.LoginException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.dao.UserDAO;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 /**
  * This class implements the methods required to access the User information from the database
@@ -26,24 +30,18 @@ import com.damosais.sid.database.dao.UserDAO;
 public class UserService {
     private static final String DEFAULT_NAME = "Admin";
     private static final String DEFAULT_PASS = "password";
+    private static final UserRole DEFAULT_ROLE = UserRole.USER_ADMIN;
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    
     @Autowired
     private UserDAO userDao;
 
-    /**
-     * Creates a user with the given user name and password
-     *
-     * @param name
-     *            The user's name
-     * @param password
-     *            The clear password
-     * @throws GeneralSecurityException
-     *             If there's a problem creating the user
-     */
-    public void create(String name, String password) throws GeneralSecurityException {
+    private void createDefaultUser() throws GeneralSecurityException {
         final User user = new User();
-        user.setName(name);
+        user.setName(DEFAULT_NAME);
         user.setSalt(generateSalt());
-        user.setPassword(getEncryptedPassword(password, user.getSalt()));
+        user.setPassword(getEncryptedPassword(DEFAULT_PASS, user.getSalt()));
+        user.setRoles(Sets.newHashSet(DEFAULT_ROLE));
         userDao.save(user);
     }
 
@@ -74,7 +72,7 @@ public class UserService {
         final byte[] salt = new byte[8];
         random.nextBytes(salt);
         
-        return new String(salt);
+        return new String(Base64.getEncoder().encode(salt));
     }
 
     /**
@@ -105,8 +103,8 @@ public class UserService {
         final KeySpec spec = new PBEKeySpec(password.toCharArray(), salt.getBytes(), iterations, derivedKeyLength);
 
         final SecretKeyFactory f = SecretKeyFactory.getInstance(algorithm);
-
-        return new String(f.generateSecret(spec).getEncoded());
+        
+        return new String(Base64.getEncoder().encode(f.generateSecret(spec).getEncoded()));
     }
 
     /**
@@ -132,16 +130,31 @@ public class UserService {
     public User login(String username, String password) throws GeneralSecurityException {
         // First of all we check that any user exists. If not we create the default one
         if (userDao.count() == 0) {
-            create(DEFAULT_NAME, DEFAULT_PASS);
+            createDefaultUser();
         }
 
         User user = userDao.findByName(username);
         // If the user exists but has either a blank password or the passwords don't match we don't return it
         if (user != null) {
-            // If the user exists we encrypt the password to be able to compare them
-            final String encryptedPassword = getEncryptedPassword(password, user.getSalt());
-            if (StringUtils.isEmpty(user.getPassword()) || !user.getPassword().equals(encryptedPassword)) {
-                user = null;
+            // We then check that the user has not been suspended
+            if (!user.isSuspended()) {
+                // If the user exists we encrypt the password to be able to compare them
+                final String encryptedPassword = getEncryptedPassword(password, user.getSalt());
+                synchronized (user) {
+                    if (StringUtils.isEmpty(user.getPassword()) || !user.getPassword().equals(encryptedPassword)) {
+                        user.setFailedLogins(user.getFailedLogins() + 1);
+                        if (user.getFailedLogins() >= MAX_FAILED_ATTEMPTS) {
+                            user.setSuspended(true);
+                        }
+                        userDao.save(user);
+                        user = null;
+                    } else if (user.getFailedLogins() > 0) {
+                        user.setFailedLogins(0);
+                        userDao.save(user);
+                    }
+                }
+            } else {
+                throw new LoginException("User account is suspended");
             }
         }
         return user;

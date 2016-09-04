@@ -20,7 +20,7 @@ import com.damosais.sid.database.dao.IncidentDAO;
 public class IncidentService {
     @Autowired
     private IncidentDAO incidentDao;
-
+    
     /**
      * Deletes an incident from the database
      *
@@ -30,7 +30,7 @@ public class IncidentService {
     public void delete(Incident incident) {
         incidentDao.delete(incident);
     }
-
+    
     /**
      * Returns the existing incidents in the database
      *
@@ -41,7 +41,7 @@ public class IncidentService {
         incidentDao.findAll().forEach(incidents::add);
         return incidents;
     }
-
+    
     /**
      * Saves an existing incident to the database
      *

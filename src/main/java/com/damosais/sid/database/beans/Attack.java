@@ -1,5 +1,7 @@
 package com.damosais.sid.database.beans;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Set;
 
@@ -15,10 +17,13 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 /**
  * This class represents an attack in the Common Language which is defined as the use of a tool to exploit a vulnerability producing a set of events which lead
  * to an unauthorised result
- * 
+ *
  * @author Pablo Casais Solano
  * @version 1.0
  * @since 1.0
@@ -27,38 +32,60 @@ import javax.persistence.Table;
 @Table(name = "Attacks")
 public class Attack {
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
     private Long id;
     
-    @Column(name = "start")
-    private Date start;
-    
-    @Column(name = "end")
-    private Date end;
-    
     @ManyToOne
-    @JoinColumn(name = "toolId")
+    @JoinColumn(name = "toolId", nullable = false)
     private Tool tool;
     
     @ManyToOne
-    @JoinColumn(name = "vulnerabilityId")
+    @JoinColumn(name = "vulnerabilityId", nullable = false)
     private Vulnerability vulnerability;
     
     @OneToMany(mappedBy = "attack", fetch = FetchType.EAGER)
     @OrderBy("date asc")
     private Set<Event> events;
-    
+
     @OneToMany
     @JoinColumn(name = "attackId")
     private Set<UnauthorizedResult> unauthorizedResults;
-    
+
     @ManyToOne
     @JoinColumn(name = "incidentId")
     private Incident incident;
+
+    @CreationTimestamp
+    @Column(name = "created")
+    private Date created;
+
+    @ManyToOne
+    @JoinColumn(name = "createdBy", nullable = false)
+    private User createdBy;
+
+    @UpdateTimestamp
+    @Column(name = "lastUpdate")
+    private Date updated;
+
+    @ManyToOne
+    @JoinColumn(name = "updatedBy")
+    private User updatedBy;
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
     
     public Date getEnd() {
-        return end;
+        Date maxDate = null;
+        if (events != null && !events.isEmpty()) {
+            maxDate = Collections.max(events, Comparator.comparing(c -> c.getDate())).getDate();
+        }
+        return maxDate;
     }
     
     public Set<Event> getEvents() {
@@ -68,15 +95,19 @@ public class Attack {
     public Long getId() {
         return id;
     }
-    
+
     public Incident getIncident() {
         return incident;
     }
-    
+
     public Date getStart() {
-        return start;
+        Date minDate = null;
+        if (events != null && !events.isEmpty()) {
+            minDate = Collections.min(events, Comparator.comparing(c -> c.getDate())).getDate();
+        }
+        return minDate;
     }
-    
+
     public Tool getTool() {
         return tool;
     }
@@ -85,12 +116,24 @@ public class Attack {
         return unauthorizedResults;
     }
     
+    public Date getUpdated() {
+        return updated;
+    }
+    
+    public User getUpdatedBy() {
+        return updatedBy;
+    }
+    
     public Vulnerability getVulnerability() {
         return vulnerability;
     }
     
-    public void setEnd(Date end) {
-        this.end = end;
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+    
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
     
     public void setEvents(Set<Event> events) {
@@ -105,16 +148,20 @@ public class Attack {
         this.incident = incident;
     }
     
-    public void setStart(Date start) {
-        this.start = start;
-    }
-    
     public void setTool(Tool tool) {
         this.tool = tool;
     }
     
     public void setUnauthorizedResults(Set<UnauthorizedResult> unauthorizedResults) {
         this.unauthorizedResults = unauthorizedResults;
+    }
+    
+    public void setUpdated(Date updated) {
+        this.updated = updated;
+    }
+    
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
     
     public void setVulnerability(Vulnerability vulnerability) {

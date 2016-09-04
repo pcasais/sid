@@ -12,6 +12,8 @@ import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.CountryVariableValue;
 import com.damosais.sid.database.beans.SocioeconomicVariable;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.CountryVariableValueService;
 import com.damosais.sid.webapp.customfields.CountryFieldConverter;
 import com.damosais.sid.webapp.windows.CountryVariableValueWindow;
@@ -92,7 +94,8 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addStatistic.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addStatistic.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             countryVariableValueWindow.setAddMode(this);
             getUI().addWindow(countryVariableValueWindow);
         } else {
@@ -101,7 +104,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
             if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                 countryVariableValueWindow.setEditMode(countryVariableValueToAlter, this);
                 getUI().addWindow(countryVariableValueWindow);
-            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                 countryVariableValueService.delete(countryVariableValueToAlter);
                 refreshTableContent();
             }
@@ -277,10 +280,12 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         // Now we add the container
         container = new BeanItemContainer<>(CountryVariableValue.class);
         container.addNestedContainerProperty("country.name");
+        container.addNestedContainerProperty("createdBy.name");
+        container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "country.name", "variable", "date", "value", EDIT_BUTTON, DELETE_BUTTON });
-        table.setColumnHeaders(new String[] { "Country", "Variable", "Date", "Value", "Edit", "Delete" });
+        table.setVisibleColumns(new Object[] { "country.name", "variable", "date", "value", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
+        table.setColumnHeaders(new String[] { "Country", "Variable", "Date", "Value", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         // Now we refresh the content

@@ -10,15 +10,18 @@ import org.springframework.stereotype.Component;
 
 import com.damosais.sid.database.beans.CountryVariableValue;
 import com.damosais.sid.database.beans.SocioeconomicVariable;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.CountryVariableValueService;
 import com.damosais.sid.webapp.CountryStatisticsView;
 import com.damosais.sid.webapp.GraphicResources;
+import com.damosais.sid.webapp.WebApplication;
 import com.damosais.sid.webapp.customfields.CountryFieldConverter;
 import com.neovisionaries.i18n.CountryCode;
 import com.vaadin.data.Validator;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
-import com.vaadin.data.fieldgroup.FieldGroup.CommitException;
 import com.vaadin.data.util.BeanContainer;
+import com.vaadin.data.validator.NullValidator;
 import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
@@ -67,8 +70,10 @@ public class CountryVariableValueWindow extends Window {
      *            the country variable values being created or edited
      * @param countryStaticsView
      *            the view which called
+     * @param newItem
+     *            indicates if we are creating or editing
      */
-    private void createCountryVariableValueForm(CountryVariableValue countryVariableValue, CountryStatisticsView countryStaticsView) {
+    private void createCountryVariableValueForm(CountryVariableValue countryVariableValue, CountryStatisticsView countryStaticsView, boolean newItem) {
         // 1st) We clear the form and create the new binder
         final FormLayout form = new FormLayout();
         final BeanFieldGroup<CountryVariableValue> binder = new BeanFieldGroup<>(CountryVariableValue.class);
@@ -80,6 +85,7 @@ public class CountryVariableValueWindow extends Window {
         countryContainer.setBeanIdProperty("numeric");
         countryContainer.addAll(EnumSet.allOf(CountryCode.class));
         final ComboBox countryField = new ComboBox("Country", countryContainer);
+        countryField.addValidator(new NullValidator("You need to select a country", false));
         countryField.setItemCaptionPropertyId("name");
         countryField.setConverter(new CountryFieldConverter());
         countryField.setNullSelectionAllowed(false);
@@ -88,20 +94,21 @@ public class CountryVariableValueWindow extends Window {
         
         // 3rd) We then add the type of variable
         final ComboBox variableField = new ComboBox("Variable", Arrays.asList(SocioeconomicVariable.values()));
-        variableField.setNullSelectionAllowed(false);
+        variableField.addValidator(new NullValidator("You need to select a variable", false));
         binder.bind(variableField, "variable");
         form.addComponent(variableField);
 
         // 4th) We add the date
-        final PopupDateField dateField = new PopupDateField("Date");
+        final PopupDateField dateField = binder.buildAndBind("Date", "date", PopupDateField.class);
+        dateField.addValidator(new NullValidator("You need to select a date", false));
         dateField.setDateFormat("yyyy-MM");
         dateField.setResolution(Resolution.MONTH);
         dateField.setWidth(100, Unit.PERCENTAGE);
-        binder.bind(dateField, "date");
         form.addComponent(dateField);
 
         // 5th) We add the value of the variable
-        final TextField valueField = new TextField("Value");
+        final TextField valueField = binder.buildAndBind("Value", "value", TextField.class);
+        valueField.addValidator(new NullValidator("You need to provide a value", false));
         valueField.setNullRepresentation("");
         binder.bind(valueField, "value");
         form.addComponent(valueField);
@@ -128,28 +135,43 @@ public class CountryVariableValueWindow extends Window {
             }
         });
         
-        // 5th) We now create the save button
-        final Button saveButton = new Button("Save", event -> {
-            try {
-                binder.commit();
-                final CountryVariableValue commitedCountryVariableValue = binder.getItemDataSource().getBean();
-                countryVariableValueService.save(commitedCountryVariableValue);
-                countryStaticsView.refreshTableContent();
-                new Notification("Success", "Country variable value saved in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
-                getUI().removeWindow(this);
-            } catch (final CommitException e) {
-                LOGGER.error("Problem saving country variable value in database", e);
-                new Notification("Failure", "Error saving country variable value: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE);
-            }
-        });
-        saveButton.setStyleName("link");
-        saveButton.setIcon(GraphicResources.SAVE_ICON);
-        
-        // 6th) We clear the window contents and add everything in order
+        // 5th) We clear the window contents and add everything in order
         content.removeAllComponents();
         content.addComponent(form);
-        content.addComponent(saveButton);
-        content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
+
+        // 6th) Now we create the save button if the user can edit data
+        final User user = ((WebApplication) countryStaticsView.getUI()).getUser();
+        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+            final Button saveButton = new Button("Save", event -> {
+                try {
+                    binder.commit();
+                    saveCountryVariableValue(binder.getItemDataSource().getBean(), newItem, user);
+                    countryStaticsView.refreshTableContent();
+                    new Notification("Success", "Country variable value saved in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
+                    getUI().removeWindow(this);
+                } catch (final Exception e) {
+                    LOGGER.error("Problem saving country variable value in database", e);
+                    Throwable cause = e;
+                    while (cause.getCause() != null) {
+                        cause = cause.getCause();
+                    }
+                    new Notification("Failure", "Error saving country variable value: " + cause.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+                }
+            });
+            saveButton.setStyleName("link");
+            saveButton.setIcon(GraphicResources.SAVE_ICON);
+            content.addComponent(saveButton);
+            content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
+        }
+    }
+    
+    private void saveCountryVariableValue(CountryVariableValue commitedCountryVariableValue, boolean newItem, User user) {
+        if (newItem) {
+            commitedCountryVariableValue.setCreatedBy(user);
+        } else {
+            commitedCountryVariableValue.setUpdatedBy(user);
+        }
+        countryVariableValueService.save(commitedCountryVariableValue);
     }
     
     /**
@@ -161,7 +183,7 @@ public class CountryVariableValueWindow extends Window {
     public void setAddMode(CountryStatisticsView countryStatisticsView) {
         setCaption("Adding new country variable value");
         final CountryVariableValue newCountryVariableValue = new CountryVariableValue();
-        createCountryVariableValueForm(newCountryVariableValue, countryStatisticsView);
+        createCountryVariableValueForm(newCountryVariableValue, countryStatisticsView, true);
     }
 
     /**
@@ -174,6 +196,6 @@ public class CountryVariableValueWindow extends Window {
      */
     public void setEditMode(CountryVariableValue countryVariableValueToAlter, CountryStatisticsView countryStatisticsView) {
         setCaption("Editing country variable value");
-        createCountryVariableValueForm(countryVariableValueToAlter, countryStatisticsView);
+        createCountryVariableValueForm(countryVariableValueToAlter, countryStatisticsView, false);
     }
 }

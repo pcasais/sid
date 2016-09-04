@@ -1,5 +1,7 @@
 package com.damosais.sid.database.beans;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Set;
 
@@ -15,9 +17,13 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * This class represents an incident in the Common Language which is defined as an attacker launching a set of attacks with a specific motivation
@@ -27,60 +33,93 @@ import javax.persistence.Table;
  * @since 1.0
  */
 @Entity
-@Table(name = "Incidents")
+@Table(name = "Incidents", uniqueConstraints = @UniqueConstraint(columnNames = { "name" }))
 public class Incident {
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
     private Long id;
 
-    @Column(name = "start")
-    private Date start;
-
-    @Column(name = "end")
-    private Date end;
-
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(targetEntity = Attacker.class, cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(name = "IncidentAttackers", joinColumns = @JoinColumn(name = "incidentId"), inverseJoinColumns = @JoinColumn(name = "attackerId"))
     private Set<Attacker> attackers;
     
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "incident", fetch = FetchType.EAGER)
-    @OrderBy("start asc")
+    @OneToMany(mappedBy = "incident", fetch = FetchType.EAGER)
     private Set<Attack> attacks;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "motivation")
+    @Column(name = "motivation", nullable = false)
     private Motivation motivation;
+    
+    @CreationTimestamp
+    @Column(name = "created")
+    private Date created;
+    
+    @ManyToOne
+    @JoinColumn(name = "createdBy", nullable = false)
+    private User createdBy;
+    
+    @UpdateTimestamp
+    @Column(name = "lastUpdate")
+    private Date updated;
+    
+    @ManyToOne
+    @JoinColumn(name = "updatedBy")
+    private User updatedBy;
 
     public Set<Attacker> getAttackers() {
         return attackers;
     }
-
+    
     public Set<Attack> getAttacks() {
         return attacks;
     }
-
-    public Date getEnd() {
-        return end;
+    
+    public Date getCreated() {
+        return created;
     }
-
+    
+    public User getCreatedBy() {
+        return createdBy;
+    }
+    
+    public Date getEnd() {
+        Date maxDate = null;
+        if (attacks != null && !attacks.isEmpty()) {
+            maxDate = Collections.max(attacks, Comparator.comparing(c -> c.getEnd())).getEnd();
+        }
+        return maxDate;
+    }
+    
     public Long getId() {
         return id;
     }
-
+    
     public Motivation getMotivation() {
         return motivation;
     }
-
+    
     public String getName() {
         return name;
     }
-
+    
     public Date getStart() {
-        return start;
+        Date minDate = null;
+        if (attacks != null && !attacks.isEmpty()) {
+            minDate = Collections.min(attacks, Comparator.comparing(c -> c.getStart())).getStart();
+        }
+        return minDate;
+    }
+
+    public Date getUpdated() {
+        return updated;
+    }
+
+    public User getUpdatedBy() {
+        return updatedBy;
     }
 
     public void setAttackers(Set<Attacker> attackers) {
@@ -91,8 +130,12 @@ public class Incident {
         this.attacks = attacks;
     }
 
-    public void setEnd(Date end) {
-        this.end = end;
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
     }
 
     public void setId(Long id) {
@@ -107,7 +150,11 @@ public class Incident {
         this.name = name;
     }
 
-    public void setStart(Date start) {
-        this.start = start;
+    public void setUpdated(Date updated) {
+        this.updated = updated;
+    }
+
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

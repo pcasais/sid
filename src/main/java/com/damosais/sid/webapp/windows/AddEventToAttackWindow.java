@@ -9,9 +9,11 @@ import org.springframework.stereotype.Component;
 import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.Attack;
+import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.services.EventService;
 import com.damosais.sid.webapp.AttacksView;
 import com.damosais.sid.webapp.GraphicResources;
+import com.damosais.sid.webapp.WebApplication;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
@@ -27,18 +29,18 @@ import com.vaadin.ui.Window;
  * @since 1.0
  */
 @Component
-public class AddEventWindow extends Window {
-    private static final Logger LOGGER = Logger.getLogger(AddEventWindow.class);
+public class AddEventToAttackWindow extends Window {
+    private static final Logger LOGGER = Logger.getLogger(AddEventToAttackWindow.class);
     private static final long serialVersionUID = 886191629031920874L;
     private final VerticalLayout content;
-
+    
     @Autowired
     private EventService eventService;
-
+    
     /**
      * Creates a new window to add events to an existing attack
      */
-    public AddEventWindow() {
+    public AddEventToAttackWindow() {
         setModal(true);
         setSizeUndefined();
         content = new VerticalLayout();
@@ -48,7 +50,7 @@ public class AddEventWindow extends Window {
         setContent(content);
         setCaption("Adding event to attack");
     }
-
+    
     /**
      * Prepares the window to add an existing event to an attack
      *
@@ -61,7 +63,7 @@ public class AddEventWindow extends Window {
         // 1st) We initialise the form and add the combo box (we only add events that are not assigned)
         final VerticalLayout form = new VerticalLayout();
         final List<com.damosais.sid.database.beans.Event> eventsFiltered = eventService.list().stream().filter(event -> event.getAttack() == null).collect(Collectors.toList());
-
+        
         final FilterTable eventsTable = new FilterTable();
         eventsTable.setFilterBarVisible(true);
         // Now we add the container
@@ -79,26 +81,32 @@ public class AddEventWindow extends Window {
         eventsTable.setImmediate(true);
         eventContainer.addAll(eventsFiltered);
         form.addComponent(eventsTable);
-
+        
         // 2nd) Now we create the button to save
+        final User user = ((WebApplication) attacksView.getUI()).getUser();
         final Button saveButton = new Button("Save", event -> {
             try {
                 final com.damosais.sid.database.beans.Event selectedEvent = (com.damosais.sid.database.beans.Event) eventsTable.getValue();
                 if (selectedEvent != null) {
                     selectedEvent.setAttack(attackToAlter);
+                    selectedEvent.setUpdatedBy(user);
+                    eventService.save(selectedEvent);
+                    attacksView.refreshEventsTableContent(attackToAlter);
+                    new Notification("Success", "Event added to attack in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
+                    getUI().removeWindow(this);
                 }
-                eventService.save(selectedEvent);
-                attacksView.refreshEventsTableContent(attackToAlter);
-                new Notification("Success", "Event added to attack in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
-                getUI().removeWindow(this);
             } catch (final Exception e) {
                 LOGGER.error("Problem saving event in database", e);
-                new Notification("Failure", "Error saving event: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE);
+                Throwable cause = e;
+                while (cause.getCause() != null) {
+                    cause = cause.getCause();
+                }
+                new Notification("Failure", "Error saving event: " + cause.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
             }
         });
         saveButton.setStyleName("link");
         saveButton.setIcon(GraphicResources.SAVE_ICON);
-        
+
         // 3rd) Finally we clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);

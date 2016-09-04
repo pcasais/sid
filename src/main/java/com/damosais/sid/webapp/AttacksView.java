@@ -9,9 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.Attack;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.AttackService;
 import com.damosais.sid.database.services.EventService;
-import com.damosais.sid.webapp.windows.AddEventWindow;
+import com.damosais.sid.webapp.windows.AddEventToAttackWindow;
 import com.damosais.sid.webapp.windows.AttackWindow;
 import com.vaadin.data.util.BeanItem;
 import com.vaadin.data.util.BeanItemContainer;
@@ -43,6 +45,8 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
     public static final String VIEW_NAME = "AttacksScreen";
     private static final String EDIT_BUTTON = "editButton";
     private static final String DELETE_BUTTON = "deleteButton";
+    private static final String UPDATED_BY_NAME = "updatedBy.name";
+    private static final String CREATED_BY_NAME = "createdBy.name";
     private BeanItemContainer<Attack> attacksContainer;
     private BeanItemContainer<com.damosais.sid.database.beans.Event> eventsContainer;
     private Button addAttack;
@@ -60,7 +64,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
     private AttackWindow attackWindow;
     
     @Autowired
-    private AddEventWindow addEventWindow;
+    private AddEventToAttackWindow addEventWindow;
     
     /**
      * The constructor just sets the spacing and the margin
@@ -73,10 +77,11 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addAttack.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addAttack.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             attackWindow.setAddMode(this);
             getUI().addWindow(attackWindow);
-        } else if (addEvent.equals(button)) {
+        } else if (addEvent.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             final Attack attack = (Attack) attacksTable.getValue();
             if (attack == null) {
                 new Notification("Missing attack", "To add an event you need to select an attack first. Please click on an attack and try again", Type.ERROR_MESSAGE).show(getUI().getPage());
@@ -92,14 +97,14 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     attackWindow.setEditMode(attack, this);
                     getUI().addWindow(attackWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     attackService.delete(attack);
                     refreshAttacksTableContent();
                     refreshEventsTableContent(null);
                 }
             } else if (item instanceof com.damosais.sid.database.beans.Event) {
                 final com.damosais.sid.database.beans.Event eventToAlter = (com.damosais.sid.database.beans.Event) item;
-                if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     final Attack attack = eventToAlter.getAttack();
                     attack.getEvents().remove(eventToAlter);
                     eventToAlter.setAttack(null);
@@ -187,14 +192,18 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         // Now we handle the containers
         attacksContainer = new BeanItemContainer<>(Attack.class);
         attacksContainer.addNestedContainerProperty("tool.name");
+        attacksContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        attacksContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         attacksTable.setContainerDataSource(attacksContainer);
         eventsContainer = new BeanItemContainer<>(com.damosais.sid.database.beans.Event.class);
+        eventsContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        eventsContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         eventsTable.setContainerDataSource(eventsContainer);
         // Now we define which columns are visible and what are going to be their names in the table header
-        attacksTable.setVisibleColumns(new Object[] { "start", "end", "tool.name", "vulnerability", EDIT_BUTTON, DELETE_BUTTON });
-        attacksTable.setColumnHeaders(new String[] { "Start", "End", "Tool", "Vulnerability", "Edit", "Delete" });
-        eventsTable.setVisibleColumns(new Object[] { "date", "action", "target", DELETE_BUTTON });
-        eventsTable.setColumnHeaders(new String[] { "Date", "Action", "Target", "Delete" });
+        attacksTable.setVisibleColumns(new Object[] { "start", "end", "tool.name", "vulnerability", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        attacksTable.setColumnHeaders(new String[] { "Start", "End", "Tool", "Vulnerability", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
+        eventsTable.setVisibleColumns(new Object[] { "date", "action", "target", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, DELETE_BUTTON });
+        eventsTable.setColumnHeaders(new String[] { "Date", "Action", "Target", "Created", "Created by", "Last update", "Last update by", "Delete" });
         // We then align the buttons to the middle
         attacksTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         attacksTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);

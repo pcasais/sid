@@ -7,21 +7,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.damosais.sid.database.beans.Owner;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.OwnerService;
 import com.damosais.sid.webapp.GraphicResources;
 import com.damosais.sid.webapp.OwnersView;
+import com.damosais.sid.webapp.WebApplication;
 import com.damosais.sid.webapp.customfields.CountryFieldConverter;
 import com.damosais.sid.webapp.customfields.SectorField;
 import com.neovisionaries.i18n.CountryCode;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
-import com.vaadin.data.fieldgroup.FieldGroup.CommitException;
 import com.vaadin.data.util.BeanContainer;
+import com.vaadin.data.validator.NullValidator;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
-import com.vaadin.ui.Field;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.Notification;
+import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
 
@@ -61,8 +64,10 @@ public class OwnerWindow extends Window {
      *            the owner (victim) being created or edited
      * @param ownersView
      *            the view which called
+     * @param newItem
+     *            indicates if we are creating or editing
      */
-    private void createOwnerForm(Owner owner, OwnersView ownersView) {
+    private void createOwnerForm(Owner owner, OwnersView ownersView, boolean newItem) {
         // 1st) We clear the form and create the new binder
         final FormLayout form = new FormLayout();
         final BeanFieldGroup<Owner> binder = new BeanFieldGroup<>(Owner.class);
@@ -70,7 +75,9 @@ public class OwnerWindow extends Window {
         binder.setBuffered(true);
 
         // 2nd) We add the name field
-        final Field<?> nameField = binder.buildAndBind("name");
+        final TextField nameField = binder.buildAndBind("Name", "name", TextField.class);
+        nameField.setNullRepresentation("");
+        nameField.addValidator(new NullValidator("You need to specify a name", false));
         form.addComponent(nameField);
 
         // 3rd) We add the country (due to the lack of a toString() that shows proper content we need this hack)
@@ -78,6 +85,7 @@ public class OwnerWindow extends Window {
         countryContainer.setBeanIdProperty("numeric");
         countryContainer.addAll(EnumSet.allOf(CountryCode.class));
         final ComboBox countryField = new ComboBox("Country", countryContainer);
+        countryField.addValidator(new NullValidator("You need to select a country", false));
         countryField.setItemCaptionPropertyId("name");
         countryField.setConverter(new CountryFieldConverter());
         binder.bind(countryField, "country");
@@ -85,31 +93,48 @@ public class OwnerWindow extends Window {
 
         // 4th) We then add the sector which is a custom field with a tree
         final SectorField sectorField = new SectorField();
+        sectorField.addValidator(new NullValidator("You need to select a sector", false));
         binder.bind(sectorField, "sector");
         form.addComponent(sectorField);
 
-        // 5th) We now create the save button
-        final Button saveButton = new Button("Save", event -> {
-            try {
-                binder.commit();
-                final Owner commitedOwner = binder.getItemDataSource().getBean();
-                ownerService.save(commitedOwner);
-                ownersView.refreshOwnersTableContent();
-                new Notification("Success", "Owner (victim) saved in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
-                getUI().removeWindow(this);
-            } catch (final CommitException e) {
-                LOGGER.error("Problem saving owner (victim) in database", e);
-                new Notification("Failure", "Error saving owner (victim): " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE);
-            }
-        });
-        saveButton.setStyleName("link");
-        saveButton.setIcon(GraphicResources.SAVE_ICON);
-
-        // 6th) We clear the window contents and add everything in order
+        // 5th) We clear the form and add the elements to it
         content.removeAllComponents();
         content.addComponent(form);
-        content.addComponent(saveButton);
-        content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
+
+        // 6th) Now we create the save button if the user can edit data
+        final User user = ((WebApplication) ownersView.getUI()).getUser();
+        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+            final Button saveButton = new Button("Save", event -> {
+                try {
+                    binder.commit();
+                    saveOwner(binder.getItemDataSource().getBean(), newItem, user);
+                    ownersView.refreshOwnersTableContent();
+                    new Notification("Success", "Owner (victim) saved in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
+                    getUI().removeWindow(this);
+                } catch (final Exception e) {
+                    LOGGER.error("Problem saving owner (victim) in database", e);
+                    Throwable cause = e;
+                    while (cause.getCause() != null) {
+                        cause = cause.getCause();
+                    }
+                    new Notification("Failure", "Error saving owner (victim): " + cause.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+                }
+            });
+            saveButton.setStyleName("link");
+            saveButton.setIcon(GraphicResources.SAVE_ICON);
+            
+            content.addComponent(saveButton);
+            content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
+        }
+    }
+
+    private void saveOwner(Owner commitedOwner, boolean newItem, User user) {
+        if (newItem) {
+            commitedOwner.setCreatedBy(user);
+        } else {
+            commitedOwner.setUpdatedBy(user);
+        }
+        ownerService.save(commitedOwner);
     }
 
     /**
@@ -121,7 +146,7 @@ public class OwnerWindow extends Window {
     public void setAddMode(OwnersView ownersView) {
         setCaption("Adding new victim");
         final Owner newOwner = new Owner();
-        createOwnerForm(newOwner, ownersView);
+        createOwnerForm(newOwner, ownersView, true);
     }
     
     /**
@@ -134,6 +159,6 @@ public class OwnerWindow extends Window {
      */
     public void setEditMode(Owner ownerToAlter, OwnersView ownersView) {
         setCaption("Editing victim");
-        createOwnerForm(ownerToAlter, ownersView);
+        createOwnerForm(ownerToAlter, ownersView, false);
     }
 }

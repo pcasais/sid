@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.Tool;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.ToolService;
 import com.damosais.sid.webapp.windows.ToolWindow;
 import com.vaadin.data.util.BeanItem;
@@ -58,7 +60,8 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addEvent.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addEvent.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             toolWindow.setAddMode(this);
             getUI().addWindow(toolWindow);
         } else {
@@ -67,7 +70,7 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
             if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                 toolWindow.setEditMode(toolToAlter, this);
                 getUI().addWindow(toolWindow);
-            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                 toolService.delete(toolToAlter);
                 refreshTableContent();
             }
@@ -140,10 +143,12 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         table.addGeneratedColumn(DELETE_BUTTON, this);
         // Now we add the container
         container = new BeanItemContainer<>(Tool.class);
+        container.addNestedContainerProperty("createdBy.name");
+        container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "name", "type", EDIT_BUTTON, DELETE_BUTTON });
-        table.setColumnHeaders(new String[] { "Name", "Type", "Edit", "Delete" });
+        table.setVisibleColumns(new Object[] { "name", "type", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
+        table.setColumnHeaders(new String[] { "Name", "Type", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         // Now we refresh the content

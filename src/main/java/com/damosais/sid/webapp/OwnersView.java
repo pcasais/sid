@@ -10,6 +10,8 @@ import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.Owner;
 import com.damosais.sid.database.beans.Target;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.OwnerService;
 import com.damosais.sid.database.services.TargetService;
 import com.damosais.sid.webapp.windows.OwnerWindow;
@@ -40,11 +42,13 @@ import com.vaadin.ui.VerticalLayout;
  */
 @SpringView(name = OwnersView.VIEW_NAME)
 public class OwnersView extends VerticalLayout implements View, ColumnGenerator, ClickListener {
-    private static final String COUNTRY_NAME = "country.name";
     private static final long serialVersionUID = -3226311660570691680L;
     public static final String VIEW_NAME = "VictimScreen";
     private static final String EDIT_BUTTON = "editButton";
     private static final String DELETE_BUTTON = "deleteButton";
+    private static final String UPDATED_BY_NAME = "updatedBy.name";
+    private static final String CREATED_BY_NAME = "createdBy.name";
+    private static final String COUNTRY_NAME = "country.name";
     private BeanItemContainer<Owner> ownersContainer;
     private BeanItemContainer<Target> targetsContainer;
     private Button addOwner;
@@ -75,10 +79,11 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addOwner.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addOwner.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             ownerWindow.setAddMode(this);
             getUI().addWindow(ownerWindow);
-        } else if (addTarget.equals(button)) {
+        } else if (addTarget.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             final Owner owner = (Owner) ownersTable.getValue();
             if (owner == null) {
                 new Notification("Missing owner", "To create a target you need to select an owner first. Please click on an owner and try again", Type.ERROR_MESSAGE).show(getUI().getPage());
@@ -94,7 +99,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     ownerWindow.setEditMode(owner, this);
                     getUI().addWindow(ownerWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     ownerService.delete(owner);
                     refreshOwnersTableContent();
                     refreshTargetsTableContent(null);
@@ -104,7 +109,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     targetWindow.setEditMode(target, this);
                     getUI().addWindow(targetWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     final Owner owner = target.getOwner();
                     owner.getTargets().remove(target);
                     targetService.delete(target);
@@ -184,25 +189,29 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         ownersTable.setFilterBarVisible(true);
         targetsTable = new FilterTable();
         targetsTable.setFilterBarVisible(true);
-        // We add a column with the button to edit the attack details
+        // We add a column with the button to edit the details
         ownersTable.addGeneratedColumn(EDIT_BUTTON, this);
         targetsTable.addGeneratedColumn(EDIT_BUTTON, this);
-        // We add a column with the button to delete the attack
+        // We add the columns for the delete button
         ownersTable.addGeneratedColumn(DELETE_BUTTON, this);
         targetsTable.addGeneratedColumn(DELETE_BUTTON, this);
         // Now we handle the containers
         ownersContainer = new BeanItemContainer<>(Owner.class);
         ownersContainer.addNestedContainerProperty(COUNTRY_NAME);
         ownersContainer.addNestedContainerProperty("sector.description");
+        ownersContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        ownersContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         ownersTable.setContainerDataSource(ownersContainer);
         targetsContainer = new BeanItemContainer<>(Target.class);
         targetsContainer.addNestedContainerProperty(COUNTRY_NAME);
+        targetsContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        targetsContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         targetsTable.setContainerDataSource(targetsContainer);
         // Now we define which columns are visible and what are going to be their names in the table header
-        ownersTable.setVisibleColumns(new Object[] { "name", COUNTRY_NAME, "sector.description", EDIT_BUTTON, DELETE_BUTTON });
-        ownersTable.setColumnHeaders(new String[] { "Name", "Country", "Sector", "Edit", "Delete" });
-        targetsTable.setVisibleColumns(new Object[] { "siteName", "ips", COUNTRY_NAME, EDIT_BUTTON, DELETE_BUTTON });
-        targetsTable.setColumnHeaders(new String[] { "Site name", "IPs", "country", "Edit", "Delete" });
+        ownersTable.setVisibleColumns(new Object[] { "name", COUNTRY_NAME, "sector.description", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        ownersTable.setColumnHeaders(new String[] { "Name", "Country", "Sector", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
+        targetsTable.setVisibleColumns(new Object[] { "siteName", "ips", COUNTRY_NAME, "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        targetsTable.setColumnHeaders(new String[] { "Site name", "IPs", "country", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
         // We then align the buttons to the middle
         ownersTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         ownersTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);

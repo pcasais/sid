@@ -10,9 +10,11 @@ import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.Attack;
 import com.damosais.sid.database.beans.Incident;
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.AttackService;
 import com.damosais.sid.database.services.IncidentService;
-import com.damosais.sid.webapp.windows.AddAttackWindow;
+import com.damosais.sid.webapp.windows.AddAttackToIncidentWindow;
 import com.damosais.sid.webapp.windows.IncidentWindow;
 import com.vaadin.data.util.BeanItem;
 import com.vaadin.data.util.BeanItemContainer;
@@ -44,25 +46,27 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
     public static final String VIEW_NAME = "IncidentsScreen";
     private static final String EDIT_BUTTON = "editButton";
     private static final String DELETE_BUTTON = "deleteButton";
+    private static final String UPDATED_BY_NAME = "updatedBy.name";
+    private static final String CREATED_BY_NAME = "createdBy.name";
     private BeanItemContainer<Incident> incidentsContainer;
     private BeanItemContainer<Attack> attacksContainer;
     private Button addIncident;
     private Button addAttack;
     private FilterTable incidentsTable;
     private FilterTable attacksTable;
-    
+
     @Autowired
     private IncidentService incidentService;
-
+    
     @Autowired
     private AttackService attackService;
-    
+
     @Autowired
     private IncidentWindow incidentWindow;
-    
-    @Autowired
-    private AddAttackWindow addAttackWindow;
 
+    @Autowired
+    private AddAttackToIncidentWindow addAttackWindow;
+    
     /**
      * The constructor just sets the spacing and the margin
      */
@@ -70,14 +74,15 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         setSpacing(true);
         setMargin(true);
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addIncident.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addIncident.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             incidentWindow.setAddMode(this);
             getUI().addWindow(incidentWindow);
-        } else if (addAttack.equals(button)) {
+        } else if (addAttack.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             final Incident incident = (Incident) incidentsTable.getValue();
             if (incident == null) {
                 new Notification("Missing incident", "To add an attack you need to select an incident first. Please click on an incidet and try again", Type.ERROR_MESSAGE).show(getUI().getPage());
@@ -93,14 +98,14 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     incidentWindow.setEditMode(incident, this);
                     getUI().addWindow(incidentWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     incidentService.delete(incident);
                     refreshIncidentsTableContent();
                     refreshAttacksTableContent(null);
                 }
             } else if (item instanceof Attack) {
                 final Attack attack = (Attack) item;
-                if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+                if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                     final Incident incident = attack.getIncident();
                     incident.getAttacks().remove(attack);
                     attack.setIncident(null);
@@ -111,7 +116,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
             }
         }
     }
-
+    
     private void createButtons() {
         addIncident = new Button("Add Incident", this);
         addIncident.setStyleName("link");
@@ -120,12 +125,12 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         addAttack.setStyleName("link");
         addAttack.setIcon(GraphicResources.ADD_ICON);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-
+    
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
         // First we create a button and set its data with the incident
@@ -148,7 +153,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -165,7 +170,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         setComponentAlignment(addIncident, Alignment.MIDDLE_CENTER);
         addComponent(incidentsTable);
         setComponentAlignment(incidentsTable, Alignment.MIDDLE_CENTER);
-        
+
         final Label attackLabel = new Label("<center><p>In the <b>Attacks</b> you can review the existing attacks and its definitions.<br/>Once you have selected an incident in the above table you will be able to assign and remove attacks that belong to it in the table below.</p></center>", ContentMode.HTML);
         addComponent(attackLabel);
         addComponent(addAttack);
@@ -173,7 +178,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         addComponent(attacksTable);
         setComponentAlignment(attacksTable, Alignment.TOP_CENTER);
     }
-
+    
     private void initializeTables() {
         // We create the tables
         incidentsTable = new FilterTable();
@@ -187,15 +192,19 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         attacksTable.addGeneratedColumn(DELETE_BUTTON, this);
         // Now we handle the containers
         incidentsContainer = new BeanItemContainer<>(Incident.class);
+        incidentsContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        incidentsContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         incidentsTable.setContainerDataSource(incidentsContainer);
         attacksContainer = new BeanItemContainer<>(Attack.class);
         attacksContainer.addNestedContainerProperty("tool.name");
+        attacksContainer.addNestedContainerProperty(CREATED_BY_NAME);
+        attacksContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         attacksTable.setContainerDataSource(attacksContainer);
         // Now we define which columns are visible and what are going to be their names in the table header
-        incidentsTable.setVisibleColumns(new Object[] { "start", "end", "attackers", "motivation", EDIT_BUTTON, DELETE_BUTTON });
-        incidentsTable.setColumnHeaders(new String[] { "Start", "End", "Attackers", "Motivation", "Edit", "Delete" });
-        attacksTable.setVisibleColumns(new Object[] { "start", "end", "tool.name", "vulnerability", DELETE_BUTTON });
-        attacksTable.setColumnHeaders(new String[] { "Start", "End", "Tool", "Vulnerability", "Delete" });
+        incidentsTable.setVisibleColumns(new Object[] { "start", "end", "attackers", "motivation", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        incidentsTable.setColumnHeaders(new String[] { "Start", "End", "Attackers", "Motivation", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
+        attacksTable.setVisibleColumns(new Object[] { "start", "end", "tool.name", "vulnerability", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, DELETE_BUTTON });
+        attacksTable.setColumnHeaders(new String[] { "Start", "End", "Tool", "Vulnerability", "Created", "Created by", "Last update", "Last update by", "Delete" });
         // We then align the buttons to the middle
         incidentsTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         incidentsTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
@@ -210,7 +219,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         refreshIncidentsTableContent();
         refreshAttacksTableContent(null);
     }
-    
+
     /**
      * Refreshes the table with the attacks data
      *
@@ -226,7 +235,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         attacksContainer.removeAllItems();
         attacksContainer.addAll(attacks);
     }
-    
+
     /**
      * Refreshes the table with the incidents data
      */

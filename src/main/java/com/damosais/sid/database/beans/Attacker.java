@@ -1,5 +1,6 @@
 package com.damosais.sid.database.beans;
 
+import java.util.Date;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -11,12 +12,16 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
-import javax.persistence.OrderBy;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.neovisionaries.i18n.CountryCode;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 /**
  * This class represents an attacker on an incident. It is characterised by its name, country and type
@@ -26,27 +31,43 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
  * @since 1.0
  */
 @Entity
-@Table(name = "Attackers")
+@Table(name = "Attackers", uniqueConstraints = @UniqueConstraint(columnNames = { "name" }))
 public class Attacker {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @XStreamAlias("numeric")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "country", nullable = false)
     private CountryCode country;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     private AttackerType type;
-
-    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "attackers", fetch = FetchType.LAZY)
-    @OrderBy("start desc")
+    
+    @ManyToMany(cascade = CascadeType.MERGE, mappedBy = "attackers", fetch = FetchType.LAZY)
     private Set<Incident> incidents;
-
+    
+    @CreationTimestamp
+    @Column(name = "created")
+    private Date created;
+    
+    @ManyToOne
+    @JoinColumn(name = "createdBy", nullable = false)
+    private User createdBy;
+    
+    @UpdateTimestamp
+    @Column(name = "lastUpdate")
+    private Date updated;
+    
+    @ManyToOne
+    @JoinColumn(name = "updatedBy")
+    private User updatedBy;
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -74,25 +95,41 @@ public class Attacker {
         }
         return true;
     }
-
+    
     public CountryCode getCountry() {
         return country;
     }
+    
+    public Date getCreated() {
+        return created;
+    }
 
+    public User getCreatedBy() {
+        return createdBy;
+    }
+    
     public Long getId() {
         return id;
     }
-
+    
     public Set<Incident> getIncidents() {
         return incidents;
     }
-
+    
     public String getName() {
         return name;
     }
-
+    
     public AttackerType getType() {
         return type;
+    }
+
+    public Date getUpdated() {
+        return updated;
+    }
+
+    public User getUpdatedBy() {
+        return updatedBy;
     }
 
     @Override
@@ -109,6 +146,14 @@ public class Attacker {
         this.country = country;
     }
 
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -123,6 +168,14 @@ public class Attacker {
 
     public void setType(AttackerType type) {
         this.type = type;
+    }
+
+    public void setUpdated(Date updated) {
+        this.updated = updated;
+    }
+
+    public void setUpdatedBy(User updatedBy) {
+        this.updatedBy = updatedBy;
     }
 
     @Override

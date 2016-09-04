@@ -3,6 +3,7 @@ package com.damosais.sid.webapp;
 import java.security.GeneralSecurityException;
 
 import javax.annotation.PostConstruct;
+import javax.security.auth.login.LoginException;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +39,10 @@ public class LoginScreen extends VerticalLayout implements View {
     private TextField userName;
     private PasswordField password;
     private Button loginButton;
-    
+
     @Autowired
     private UserService userService;
-    
+
     /**
      * The default constructor just adds the spacing and margins
      */
@@ -49,19 +50,19 @@ public class LoginScreen extends VerticalLayout implements View {
         setSpacing(true);
         setMargin(true);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         userName.focus();
     }
-
+    
     @PostConstruct
     void init() {
         // First we add the logo
         final Embedded logo = new Embedded(null, GraphicResources.SECURITY_LOGO);
         addComponent(logo);
         setComponentAlignment(logo, Alignment.MIDDLE_CENTER);
-
+        
         // Then we add the form with the user and password
         userName = new TextField("User Name");
         addComponent(userName);
@@ -69,7 +70,7 @@ public class LoginScreen extends VerticalLayout implements View {
         password = new PasswordField("Password");
         addComponent(password);
         setComponentAlignment(password, Alignment.MIDDLE_CENTER);
-
+        
         // Finally we add the button
         loginButton = new Button("Login", event -> {
             try {
@@ -82,12 +83,13 @@ public class LoginScreen extends VerticalLayout implements View {
                     final Notification error = new Notification("Invalid credentials", Notification.Type.ERROR_MESSAGE);
                     error.show(Page.getCurrent());
                 }
+            } catch (final LoginException e) {
+                LOGGER.error("Invalid login detected from " + Page.getCurrent().getWebBrowser().getAddress(), e);
             } catch (final GeneralSecurityException e) {
                 LOGGER.error("Problem during call to UserService.login()", e);
                 final Notification error = new Notification("Internal error", "Problem while accessing the user repository: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE);
                 error.show(Page.getCurrent());
             }
-            
         });
         loginButton.setClickShortcut(KeyCode.ENTER);
         addComponent(loginButton);

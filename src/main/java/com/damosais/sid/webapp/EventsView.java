@@ -5,6 +5,8 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tepi.filtertable.FilterTable;
 
+import com.damosais.sid.database.beans.User;
+import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.EventService;
 import com.damosais.sid.webapp.windows.EventWindow;
 import com.vaadin.data.util.BeanItem;
@@ -57,7 +59,8 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
-        if (addEvent.equals(button)) {
+        final User user = ((WebApplication) getUI()).getUser();
+        if (addEvent.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
             eventWindow.setAddMode(this);
             getUI().addWindow(eventWindow);
         } else {
@@ -66,7 +69,7 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
             if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                 eventWindow.setEditMode(eventToAlter, this);
                 getUI().addWindow(eventWindow);
-            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon())) {
+            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
                 eventService.delete(eventToAlter);
                 refreshTableContent();
             }
@@ -142,10 +145,12 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
         container.addNestedContainerProperty("target.siteName");
         container.addNestedContainerProperty("target.country.name");
         container.addNestedContainerProperty("target.owner.name");
+        container.addNestedContainerProperty("createdBy.name");
+        container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "date", "action", "target.siteName", "target.country.name", "target.owner.name", EDIT_BUTTON, DELETE_BUTTON });
-        table.setColumnHeaders(new String[] { "Date", "Action", "Target Site", "Target Country", "Target Owner", "Edit", "Delete" });
+        table.setVisibleColumns(new Object[] { "date", "action", "target.siteName", "target.country.name", "target.owner.name", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
+        table.setColumnHeaders(new String[] { "Date", "Action", "Target Site", "Target Country", "Target Owner", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         // Now we refresh the content
