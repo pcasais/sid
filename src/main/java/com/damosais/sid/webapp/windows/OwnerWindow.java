@@ -40,10 +40,10 @@ public class OwnerWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(OwnerWindow.class);
     private static final long serialVersionUID = 8434835262821274799L;
     private final VerticalLayout content;
-
+    
     @Autowired
     private OwnerService ownerService;
-
+    
     /**
      * Creates a new window to add or edit owners (victims)
      */
@@ -56,7 +56,7 @@ public class OwnerWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit owners (victims)
      *
@@ -73,13 +73,13 @@ public class OwnerWindow extends Window {
         final BeanFieldGroup<Owner> binder = new BeanFieldGroup<>(Owner.class);
         binder.setItemDataSource(owner);
         binder.setBuffered(true);
-
+        
         // 2nd) We add the name field
         final TextField nameField = binder.buildAndBind("Name", "name", TextField.class);
         nameField.setNullRepresentation("");
         nameField.addValidator(new NullValidator("You need to specify a name", false));
         form.addComponent(nameField);
-
+        
         // 3rd) We add the country (due to the lack of a toString() that shows proper content we need this hack)
         final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
         countryContainer.setBeanIdProperty("numeric");
@@ -90,20 +90,20 @@ public class OwnerWindow extends Window {
         countryField.setConverter(new CountryFieldConverter());
         binder.bind(countryField, "country");
         form.addComponent(countryField);
-
+        
         // 4th) We then add the sector which is a custom field with a tree
         final SectorField sectorField = new SectorField();
         sectorField.addValidator(new NullValidator("You need to select a sector", false));
         binder.bind(sectorField, "sector");
         form.addComponent(sectorField);
-
+        
         // 5th) We clear the form and add the elements to it
         content.removeAllComponents();
         content.addComponent(form);
-
+        
         // 6th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) ownersView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -122,12 +122,12 @@ public class OwnerWindow extends Window {
             });
             saveButton.setStyleName("link");
             saveButton.setIcon(GraphicResources.SAVE_ICON);
-            
+
             content.addComponent(saveButton);
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
+    
     private void saveOwner(Owner commitedOwner, boolean newItem, User user) {
         if (newItem) {
             commitedOwner.setCreatedBy(user);
@@ -136,7 +136,7 @@ public class OwnerWindow extends Window {
         }
         ownerService.save(commitedOwner);
     }
-
+    
     /**
      * Prepares the window to add a new victim (owner)
      *
@@ -148,7 +148,7 @@ public class OwnerWindow extends Window {
         final Owner newOwner = new Owner();
         createOwnerForm(newOwner, ownersView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing victim (owner)
      *

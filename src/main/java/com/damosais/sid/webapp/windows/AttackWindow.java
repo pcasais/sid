@@ -36,16 +36,16 @@ public class AttackWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(AttackWindow.class);
     private static final long serialVersionUID = -452236927715765818L;
     private final VerticalLayout content;
-
+    
     @Autowired
     private AttackService attackService;
-    
+
     @Autowired
     private ToolService toolService;
-    
+
     @Autowired
     private VulnerabilityService vulnerabilityService;
-
+    
     /**
      * Creates a new window to add or edit attacks
      */
@@ -58,7 +58,7 @@ public class AttackWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit attacks
      *
@@ -75,26 +75,26 @@ public class AttackWindow extends Window {
         final BeanFieldGroup<Attack> binder = new BeanFieldGroup<>(Attack.class);
         binder.setItemDataSource(attack);
         binder.setBuffered(true);
-        
+
         // 2nd) Then we add the ComboBox with all the tools
         final ComboBox toolField = new ComboBox("Tool", toolService.list());
         toolField.addValidator(new NullValidator("You need to select a tool", false));
         binder.bind(toolField, "tool");
         form.addComponent(toolField);
-        
+
         // 3rd) We add the ComboBox with all the vulnerabilities
         final ComboBox vulnerabilityField = new ComboBox("Vulnerability", vulnerabilityService.list());
         vulnerabilityField.addValidator(new NullValidator("You need to select a vulnerability", false));
         binder.bind(vulnerabilityField, "vulnerability");
         form.addComponent(vulnerabilityField);
-        
+
         // 4th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
-        
+
         // 5th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) attacksView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -117,7 +117,7 @@ public class AttackWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
+    
     private void saveAttack(Attack commitedAttack, boolean newItem, User user) {
         if (newItem) {
             commitedAttack.setCreatedBy(user);
@@ -126,7 +126,7 @@ public class AttackWindow extends Window {
         }
         attackService.save(commitedAttack);
     }
-    
+
     /**
      * Prepares the window to add a new attack
      *
@@ -137,7 +137,7 @@ public class AttackWindow extends Window {
         setCaption("Adding new attack");
         createAttackForm(new Attack(), attacksView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing attack
      *

@@ -42,13 +42,13 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
     private BeanItemContainer<Tool> container;
     private Button addEvent;
     private FilterTable table;
-    
+
     @Autowired
     private ToolService toolService;
-
+    
     @Autowired
     private ToolWindow toolWindow;
-
+    
     /**
      * The constructor just enables the spacing and margins on the layout
      */
@@ -56,12 +56,12 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         setSpacing(true);
         setMargin(true);
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
         final User user = ((WebApplication) getUI()).getUser();
-        if (addEvent.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (addEvent.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             toolWindow.setAddMode(this);
             getUI().addWindow(toolWindow);
         } else {
@@ -70,13 +70,13 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
             if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                 toolWindow.setEditMode(toolToAlter, this);
                 getUI().addWindow(toolWindow);
-            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRole() == UserRole.EDIT_DATA) {
                 toolService.delete(toolToAlter);
                 refreshTableContent();
             }
         }
     }
-
+    
     private void createButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addEvent = new Button("Add tool", this);
@@ -87,12 +87,12 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         addComponent(hl);
         setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-    
+
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -112,7 +112,7 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -129,7 +129,7 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         addComponent(table);
         setComponentAlignment(table, Alignment.TOP_CENTER);
     }
-
+    
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
@@ -154,7 +154,7 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         // Now we refresh the content
         refreshTableContent();
     }
-    
+
     /**
      * It refreshes the content of the table
      */

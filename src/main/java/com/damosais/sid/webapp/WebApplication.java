@@ -40,10 +40,10 @@ public class WebApplication extends UI {
     private Navigator navigator;
     private HorizontalLayout bar;
     private MenuBar menuBar;
-
+    
     @Autowired
     private SpringViewProvider viewProvider;
-
+    
     /**
      * Adds the menu on the top so the users can change the view
      */
@@ -51,7 +51,7 @@ public class WebApplication extends UI {
         if (bar == null) {
             bar = new HorizontalLayout();
             bar.setWidth("100%");
-            
+
             menuBar = new MenuBar();
             menuBar.setWidth(100.0f, Unit.PERCENTAGE);
             menuBar.addItem("Events", selectedItem -> {
@@ -81,13 +81,16 @@ public class WebApplication extends UI {
             countries.addItem("Statistical data", selectedItem -> {
                 navigator.navigateTo(CountryStatisticsView.VIEW_NAME);
             });
-            
+            menuBar.addItem("Users", selectedItem -> {
+                navigator.navigateTo(UsersView.VIEW_NAME);
+            });
+
             final Button logout = new Button("Logout", event -> {
                 user = null;
                 removeNavigationMenu();
                 navigator.navigateTo(LoginScreen.VIEW_NAME);
             });
-
+            
             bar.addComponent(menuBar);
             bar.addComponent(logout);
             bar.setExpandRatio(menuBar, 1);
@@ -95,37 +98,37 @@ public class WebApplication extends UI {
         }
         root.addComponentAsFirst(bar);
     }
-    
+
     public User getUser() {
         return user;
     }
-
+    
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         setSizeFull();
         getPage().setTitle("Security Incident Database");
-        
+
         root = new VerticalLayout();
         root.setSizeFull();
         root.setMargin(true);
         root.setSpacing(true);
         setContent(root);
-        
+
         final Panel viewContainer = new Panel();
         viewContainer.setSizeFull();
         root.addComponent(viewContainer);
         root.setComponentAlignment(viewContainer, Alignment.MIDDLE_CENTER);
         root.setExpandRatio(viewContainer, 1.0f);
-        
+
         navigator = new Navigator(this, viewContainer);
         navigator.addViewChangeListener(new ViewChangeListener() {
             private static final long serialVersionUID = 3813804949308061211L;
-
+            
             @Override
             public void afterViewChange(ViewChangeEvent event) {
                 // Nothing to do for control
             }
-            
+
             @Override
             public boolean beforeViewChange(ViewChangeEvent event) {
                 if (!(event.getNewView() instanceof LoginScreen) && user == null) {
@@ -134,20 +137,20 @@ public class WebApplication extends UI {
                 }
                 return true;
             }
-
+            
         });
         navigator.addProvider(viewProvider);
         setNavigator(navigator);
         navigator.navigateTo(LoginScreen.VIEW_NAME);
     }
-    
+
     /**
      * Removes the menu after the logout
      */
     public void removeNavigationMenu() {
         root.removeComponent(bar);
     }
-    
+
     public void setUser(User user) {
         this.user = user;
     }

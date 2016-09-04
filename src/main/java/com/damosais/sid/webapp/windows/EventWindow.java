@@ -41,13 +41,13 @@ public class EventWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(EventWindow.class);
     private static final long serialVersionUID = 8434835262821274799L;
     private final VerticalLayout content;
-
-    @Autowired
-    private TargetService targetService;
     
     @Autowired
-    private EventService eventService;
+    private TargetService targetService;
 
+    @Autowired
+    private EventService eventService;
+    
     /**
      * Creates a new window to add or edit events
      */
@@ -60,7 +60,7 @@ public class EventWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit an event
      *
@@ -77,7 +77,7 @@ public class EventWindow extends Window {
         final BeanFieldGroup<com.damosais.sid.database.beans.Event> binder = new BeanFieldGroup<>(com.damosais.sid.database.beans.Event.class);
         binder.setItemDataSource(eventForForm);
         binder.setBuffered(true);
-
+        
         // 2nd) We create the date field
         final PopupDateField dateField = binder.buildAndBind("Date", "date", PopupDateField.class);
         dateField.addValidator(new NullValidator("You need to select a date", false));
@@ -85,14 +85,14 @@ public class EventWindow extends Window {
         dateField.setResolution(Resolution.SECOND);
         dateField.setWidth(100, Unit.PERCENTAGE);
         form.addComponent(dateField);
-
+        
         // 3rd) We create the combo box with all the actions
         final ComboBox actionField = new ComboBox("Action", Arrays.asList(Action.values()));
         actionField.addValidator(new NullValidator("You need to select an action", false));
         actionField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(actionField, "action");
         form.addComponent(actionField);
-        
+
         // 4th) We create the table with the targets available
         final FilterTable targetsTable = new FilterTable();
         targetsTable.addValidator(new NullValidator("You need to select a target", false));
@@ -110,14 +110,14 @@ public class EventWindow extends Window {
         targetsTable.setImmediate(true);
         form.addComponent(targetsTable);
         targetsTable.select(eventForForm.getTarget());
-
+        
         // 5th) We clear the form and add the elements to it
         content.removeAllComponents();
         content.addComponent(form);
-
+        
         // 6th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) eventsView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -140,7 +140,7 @@ public class EventWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-    
+
     private void saveEvent(com.damosais.sid.database.beans.Event commitedEvent, Target target, boolean newItem, User user) {
         commitedEvent.setTarget(target);
         if (newItem) {
@@ -150,7 +150,7 @@ public class EventWindow extends Window {
         }
         eventService.save(commitedEvent);
     }
-    
+
     /**
      * Prepares the window to add a new event
      *
@@ -162,7 +162,7 @@ public class EventWindow extends Window {
         final com.damosais.sid.database.beans.Event newEvent = new com.damosais.sid.database.beans.Event();
         createEventForm(newEvent, eventsView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing event
      *

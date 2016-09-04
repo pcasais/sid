@@ -49,10 +49,10 @@ public class CVEWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(CVEWindow.class);
     private static final long serialVersionUID = 5533574448540129417L;
     private final VerticalLayout content;
-    
+
     @Autowired
     private CVEDefinitionService cveDefinitionService;
-
+    
     private final Validator scoreValidator = value -> {
         if (value == null) {
             throw new InvalidValueException("Value cannot be null");
@@ -66,7 +66,7 @@ public class CVEWindow extends Window {
             throw new InvalidValueException("Invalid number '" + value + "'");
         }
     };
-    
+
     /**
      * Creates a new window to add or edit CVE definitions
      */
@@ -79,7 +79,7 @@ public class CVEWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-    
+
     /**
      * Creates the form for the CVE definition
      *
@@ -100,14 +100,14 @@ public class CVEWindow extends Window {
         final BeanFieldGroup<CVEDefinition> binder = new BeanFieldGroup<>(CVEDefinition.class);
         binder.setItemDataSource(definition);
         binder.setBuffered(true);
-
+        
         // 2nd) We add the name (CVE id)
         final TextField nameField = binder.buildAndBind("Name", "name", TextField.class);
         nameField.addValidator(new NullValidator("You need to provide a name", false));
         nameField.setNullRepresentation("");
         nameField.setWidth(100, Unit.PERCENTAGE);
         formLeft.addComponent(nameField);
-        
+
         // 3rd) We add the dates in which was published and modified
         final PopupDateField publishedField = binder.buildAndBind("Published", "published", PopupDateField.class);
         publishedField.addValidator(new NullValidator("You need to select a date", false));
@@ -120,7 +120,7 @@ public class CVEWindow extends Window {
         modifiedField.setResolution(Resolution.DAY);
         modifiedField.setWidth(100, Unit.PERCENTAGE);
         formLeft.addComponent(modifiedField);
-        
+
         // 4th) We add the descriptions
         final TextArea cveDescription = binder.buildAndBind("CVE description", "cveDesc", TextArea.class);
         cveDescription.addValidator(new NullValidator("You need to provide a description", false));
@@ -131,7 +131,7 @@ public class CVEWindow extends Window {
         nvdDescription.setNullRepresentation("");
         nvdDescription.setWidth(100, Unit.PERCENTAGE);
         formLeft.addComponent(nvdDescription);
-
+        
         // 5th) We add the combo box for the severity followed by the CVSS Scores
         final ComboBox severityField = new ComboBox("Severity", Arrays.asList(Severity.values()));
         severityField.addValidator(new NullValidator("You need to select a severity", false));
@@ -153,7 +153,7 @@ public class CVEWindow extends Window {
         cvssImpactScoreField.setWidth(100, Unit.PERCENTAGE);
         cvssImpactScoreField.addValidator(scoreValidator);
         formRight.addComponent(cvssImpactScoreField);
-        
+
         // 6th) We now add the three combo boxes to choose the AccessVector, AcessComplexity and Authentication
         final ComboBox accessVectorField = new ComboBox("Access Vector", Arrays.asList(AccessVector.values()));
         accessVectorField.addValidator(new NullValidator("You need to select an access vector", false));
@@ -170,7 +170,7 @@ public class CVEWindow extends Window {
         authenticationField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(authenticationField, "authentication");
         formRight.addComponent(authenticationField);
-
+        
         // 7th) We add the three impacts now
         final ComboBox confImpactField = new ComboBox("Confidentiality Impact", Arrays.asList(Impact.values()));
         confImpactField.addValidator(new NullValidator("You need to select a confidentiality impact", false));
@@ -187,7 +187,7 @@ public class CVEWindow extends Window {
         availImpactField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(availImpactField, "availImpact");
         formRight.addComponent(availImpactField);
-        
+
         // 8th) We now add the loss and range types
         final LossTypeField lossTypeField = new LossTypeField();
         lossTypeField.setWidth(100, Unit.PERCENTAGE);
@@ -197,16 +197,16 @@ public class CVEWindow extends Window {
         rangeTypeField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(rangeTypeField, "rangeType");
         formRight.addComponent(rangeTypeField);
-
+        
         // 9th) We now clear the window and add the components
         content.removeAllComponents();
         formsLayout.addComponent(formLeft);
         formsLayout.addComponent(formRight);
         content.addComponent(formsLayout);
-        
+
         // 10th) We create the save button
         final User user = ((WebApplication) vulnerabilitiesView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -229,7 +229,7 @@ public class CVEWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-    
+
     private void saveDefinition(CVEDefinition commitedDefinition, boolean newItem, User user) {
         if (commitedDefinition.getLossType().getDefinition() == null) {
             commitedDefinition.getLossType().setDefinition(commitedDefinition);
@@ -244,7 +244,7 @@ public class CVEWindow extends Window {
         }
         cveDefinitionService.save(commitedDefinition);
     }
-
+    
     /**
      * Prepares the window to add a new CVE definition
      *
@@ -255,7 +255,7 @@ public class CVEWindow extends Window {
         setCaption("Adding new CVE definition");
         createDefinitionForm(new CVEDefinition(), vulnerabilitiesView, true);
     }
-
+    
     /**
      * Prepares the window to edit an existing CVE definition
      *

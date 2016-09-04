@@ -4,7 +4,9 @@ import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -17,7 +19,6 @@ import org.springframework.util.StringUtils;
 import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.dao.UserDAO;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 /**
  * This class implements the methods required to access the User information from the database
@@ -41,19 +42,17 @@ public class UserService {
         user.setName(DEFAULT_NAME);
         user.setSalt(generateSalt());
         user.setPassword(getEncryptedPassword(DEFAULT_PASS, user.getSalt()));
-        user.setRoles(Sets.newHashSet(DEFAULT_ROLE));
+        user.setRole(DEFAULT_ROLE);
         userDao.save(user);
     }
 
     /**
      * Deletes an user from the database
      *
-     * @param id
-     *            The user ID being deleted
+     * @param user
+     *            The user being deleted
      */
-    public void delete(long id) {
-        final User user = new User();
-        user.setId(id);
+    public void delete(User user) {
         userDao.delete(user);
     }
 
@@ -86,7 +85,7 @@ public class UserService {
      * @throws GeneralSecurityException
      *             If there is a problem encrypting the password
      */
-    private String getEncryptedPassword(String password, String salt) throws GeneralSecurityException {
+    public String getEncryptedPassword(String password, String salt) throws GeneralSecurityException {
         // PBKDF2 with SHA-1 as the hashing algorithm. Note that the NIST
         // specifically names SHA-1 as an acceptable hashing algorithm for PBKDF2
         final String algorithm = "PBKDF2WithHmacSHA1";
@@ -112,8 +111,10 @@ public class UserService {
      *
      * @return The existing users in the database
      */
-    public Iterable<User> list() {
-        return userDao.findAll();
+    public List<User> list() {
+        final List<User> users = new ArrayList<>();
+        userDao.findAll().forEach(users::add);
+        return users;
     }
     
     /**

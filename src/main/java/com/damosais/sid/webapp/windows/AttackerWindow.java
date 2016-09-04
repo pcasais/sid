@@ -41,10 +41,10 @@ public class AttackerWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(AttackWindow.class);
     private static final long serialVersionUID = 1010720438789412977L;
     private final VerticalLayout content;
-
+    
     @Autowired
     private AttackerService attackerService;
-    
+
     /**
      * Creates a new window to add or edit attackers
      */
@@ -57,7 +57,7 @@ public class AttackerWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit attackers
      *
@@ -74,13 +74,13 @@ public class AttackerWindow extends Window {
         final BeanFieldGroup<Attacker> binder = new BeanFieldGroup<>(Attacker.class);
         binder.setItemDataSource(attacker);
         binder.setBuffered(true);
-        
+
         // 2nd) We add the name
         final TextField nameField = binder.buildAndBind("Name", "name", TextField.class);
         nameField.addValidator(new NullValidator("You need to provide a name", false));
         nameField.setNullRepresentation("");
         form.addComponent(nameField);
-        
+
         // 3rd) We now add the country (due to the lack of a toString() that shows proper content we need this hack)
         final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
         countryContainer.setBeanIdProperty("numeric");
@@ -91,20 +91,20 @@ public class AttackerWindow extends Window {
         countryField.setConverter(new CountryFieldConverter());
         binder.bind(countryField, "country");
         form.addComponent(countryField);
-        
+
         // 4th) We add the type of attacker
         final ComboBox typeField = new ComboBox("Type", Arrays.asList(AttackerType.values()));
         typeField.addValidator(new NullValidator("You need to select a type", false));
         binder.bind(typeField, "type");
         form.addComponent(typeField);
-        
+
         // 5th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
-
+        
         // 6th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) attackersView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -127,7 +127,7 @@ public class AttackerWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
+    
     private void saveAttacker(Attacker commitedAttacker, boolean newItem, User user) {
         if (newItem) {
             commitedAttacker.setCreatedBy(user);
@@ -136,7 +136,7 @@ public class AttackerWindow extends Window {
         }
         attackerService.save(commitedAttacker);
     }
-
+    
     /**
      * Prepares the window to add a new attacker
      *
@@ -147,7 +147,7 @@ public class AttackerWindow extends Window {
         setCaption("Adding new attacker");
         createIncidentForm(new Attacker(), attackersView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing attacker
      *

@@ -36,12 +36,12 @@ import com.vaadin.ui.Window;
 public class ToolWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(ToolWindow.class);
     private static final long serialVersionUID = 8053468344747983876L;
-
-    private final VerticalLayout content;
     
+    private final VerticalLayout content;
+
     @Autowired
     private ToolService toolService;
-    
+
     /**
      * Creates a new window to add or edit tools
      */
@@ -54,7 +54,7 @@ public class ToolWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-    
+
     /**
      * Creates the form for the tool
      *
@@ -71,28 +71,28 @@ public class ToolWindow extends Window {
         final BeanFieldGroup<Tool> binder = new BeanFieldGroup<>(Tool.class);
         binder.setItemDataSource(tool);
         binder.setBuffered(true);
-
+        
         // 2nd) We add a field for the name
         final TextField nameField = binder.buildAndBind("Name", "name", TextField.class);
         nameField.addValidator(new NullValidator("You need to provide a name", false));
         nameField.setNullRepresentation("");
         nameField.setWidth(100, Unit.PERCENTAGE);
         form.addComponent(nameField);
-        
+
         // 3rd) We add the selector for the type
         final ComboBox toolTypeField = new ComboBox("Type", Arrays.asList(ToolType.values()));
         toolTypeField.addValidator(new NullValidator("You need to select a type", false));
         toolTypeField.setWidth(100, Unit.PERCENTAGE);
         binder.bind(toolTypeField, "type");
         form.addComponent(toolTypeField);
-
+        
         // 4th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
-        
+
         // 5th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) toolsView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -115,7 +115,7 @@ public class ToolWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-    
+
     private void saveTool(Tool toolCommited, boolean newItem, User user) {
         if (newItem) {
             toolCommited.setCreatedBy(user);
@@ -124,7 +124,7 @@ public class ToolWindow extends Window {
         }
         toolService.save(toolCommited);
     }
-
+    
     /**
      * Prepares the window to add a new tool
      *
@@ -135,7 +135,7 @@ public class ToolWindow extends Window {
         setCaption("Adding new Tool");
         createDefinitionForm(new Tool(), toolsView, true);
     }
-
+    
     /**
      * Prepares the window to edit an existing tool
      *

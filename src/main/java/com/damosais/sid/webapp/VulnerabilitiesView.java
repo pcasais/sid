@@ -51,19 +51,19 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
     private Button updateCVEs;
     private FilterTable vulnerabilityTable;
     private FilterTable cveTable;
-    
+
     @Autowired
     private VulnerabilityService vulnerabilityService;
-
+    
     @Autowired
     private CVEDefinitionService cveDefinitionService;
-    
-    @Autowired
-    private VulnerabilityWindow vulnerabilityWindow;
 
     @Autowired
-    private CVEWindow cveWindow;
+    private VulnerabilityWindow vulnerabilityWindow;
     
+    @Autowired
+    private CVEWindow cveWindow;
+
     /**
      * The constructor just sets the spacing and the margins
      */
@@ -71,15 +71,15 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         setSpacing(true);
         setMargin(true);
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
         final User user = ((WebApplication) getUI()).getUser();
-        if (addVulnerability.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (addVulnerability.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             vulnerabilityWindow.setAddMode(this);
             getUI().addWindow(vulnerabilityWindow);
-        } else if (addCVE.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+        } else if (addCVE.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             cveWindow.setAddMode(this);
             getUI().addWindow(cveWindow);
         } else {
@@ -90,7 +90,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     vulnerabilityWindow.setEditMode(vulnerability, this);
                     getUI().addWindow(vulnerabilityWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRole() == UserRole.EDIT_DATA) {
                     vulnerabilityService.delete(vulnerability);
                     refreshVulnerabilitiesTableContent();
                 }
@@ -99,14 +99,14 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     cveWindow.setEditMode(definition, this);
                     getUI().addWindow(cveWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRole() == UserRole.EDIT_DATA) {
                     cveDefinitionService.delete(definition);
                     refreshCVEsTableContent();
                 }
             }
         }
     }
-
+    
     private void createButtons() {
         addVulnerability = new Button("Add vulnerability", this);
         addVulnerability.setStyleName("link");
@@ -118,12 +118,12 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         updateCVEs.setStyleName("link");
         updateCVEs.setIcon(GraphicResources.UPLOAD_ICON);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // Nothing to do when entering the view
     }
-
+    
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -147,7 +147,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -164,7 +164,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         setComponentAlignment(addVulnerability, Alignment.TOP_CENTER);
         addComponent(vulnerabilityTable);
         setComponentAlignment(vulnerabilityTable, Alignment.TOP_CENTER);
-
+        
         final Label cveLabel = new Label("<center><p>A <b>CVE</b> is a common identifier used by the US-CERT to categorise vulnerabilities. A CVE definition contains an ID and standardised details of a vulnerability.<br/> Below you can see the current known CVE definitions, you can edit, add, delete or upload definitions</p></center>", ContentMode.HTML);
         addComponent(cveLabel);
         final HorizontalLayout cveButtons = new HorizontalLayout();
@@ -176,7 +176,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         addComponent(cveTable);
         setComponentAlignment(cveTable, Alignment.MIDDLE_CENTER);
     }
-    
+
     private void initializeTables() {
         // We create the tables
         vulnerabilityTable = new FilterTable();
@@ -213,7 +213,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         refreshVulnerabilitiesTableContent();
         refreshCVEsTableContent();
     }
-    
+
     /**
      * Refreshes the table with the targets data
      *
@@ -224,7 +224,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         cveContainer.removeAllItems();
         cveContainer.addAll(cveDefinitionService.list());
     }
-    
+
     /**
      * Refreshes the table with the vulnerabilities data
      */

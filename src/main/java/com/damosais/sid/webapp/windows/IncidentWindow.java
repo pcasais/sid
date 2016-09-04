@@ -44,13 +44,13 @@ public class IncidentWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(AttackWindow.class);
     private static final long serialVersionUID = -2509114793374353015L;
     private final VerticalLayout content;
-
+    
     @Autowired
     private IncidentService incidentService;
-    
+
     @Autowired
     private AttackerService attackerService;
-    
+
     /**
      * Creates a new window to add or edit incidents
      */
@@ -63,7 +63,7 @@ public class IncidentWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit incidents
      *
@@ -80,14 +80,14 @@ public class IncidentWindow extends Window {
         final BeanFieldGroup<Incident> binder = new BeanFieldGroup<>(Incident.class);
         binder.setItemDataSource(incident);
         binder.setBuffered(true);
-        
+
         // 2nd) Then we add the name of the incident
         final TextField nameField = binder.buildAndBind("Name", "name", TextField.class);
         nameField.addValidator(new NullValidator("You need to provide a name", false));
         nameField.setNullRepresentation("");
         nameField.setNullSettingAllowed(true);
         form.addComponent(nameField);
-        
+
         // 5th) Now we add a table with the Attackers so they can be selected
         final FilterTable attackersTable = new FilterTable();
         attackersTable.addValidator(new NullValidator("You need to select the attackers", false));
@@ -109,20 +109,20 @@ public class IncidentWindow extends Window {
                 attackersTable.select(attacker);
             }
         }
-
+        
         // 6th) We add the ComboBox with all the motivations
         final ComboBox motivationField = new ComboBox("Motivation", Arrays.asList(Motivation.values()));
         motivationField.addValidator(new NullValidator("You need to select a motivation", false));
         binder.bind(motivationField, "motivation");
         form.addComponent(motivationField);
-        
+
         // 7th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
-        
+
         // 8th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) incidentsView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -145,7 +145,7 @@ public class IncidentWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
+    
     @SuppressWarnings("unchecked")
     private void saveIncident(Incident commitedIncident, Object object, boolean newItem, User user) {
         if (commitedIncident.getAttackers() == null) {
@@ -166,7 +166,7 @@ public class IncidentWindow extends Window {
         }
         incidentService.save(commitedIncident);
     }
-
+    
     /**
      * Prepares the window to add a new incident
      *
@@ -177,7 +177,7 @@ public class IncidentWindow extends Window {
         setCaption("Adding new incident");
         createIncidentForm(new Incident(), incidentsView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing incident
      *

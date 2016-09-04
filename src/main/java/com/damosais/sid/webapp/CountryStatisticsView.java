@@ -62,6 +62,10 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
     private static final String BY_VARIABLE_AND_DATE = "By Variable and Date";
     private static final String BY_COUNTRY_AND_DATES = "By Country and Dates";
     private static final String BY_COUNTRY_AND_VARIABLE = "By Country and Variable";
+    private static final String FAILURE = "Failure";
+    private static final String VALUE = "value";
+    private static final String YYYY_MM = "yyyy-MM";
+    private static final String COUNTRY = "Country";
     private final VerticalLayout tableLayout;
     private final VerticalLayout graphLayout;
     private VerticalLayout formLayout;
@@ -69,6 +73,10 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
     private Button addStatistic;
     private Button generateGraph;
     private FilterTable table;
+    private ComboBox countryField;
+    private ComboBox variableField;
+    private PopupDateField startDateField;
+    private PopupDateField endDateField;
     
     @Autowired
     private CountryVariableValueService countryVariableValueService;
@@ -95,7 +103,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
         final User user = ((WebApplication) getUI()).getUser();
-        if (addStatistic.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (addStatistic.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             countryVariableValueWindow.setAddMode(this);
             getUI().addWindow(countryVariableValueWindow);
         } else {
@@ -104,13 +112,37 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
             if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                 countryVariableValueWindow.setEditMode(countryVariableValueToAlter, this);
                 getUI().addWindow(countryVariableValueWindow);
-            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+            } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRole() == UserRole.EDIT_DATA) {
                 countryVariableValueService.delete(countryVariableValueToAlter);
                 refreshTableContent();
             }
         }
     }
 
+    private void changeAllowedFormFieldd(Object value) {
+        if (BY_COUNTRY_AND_VARIABLE.equals(value)) {
+            // In this case we enable the country and variable and disable the dates
+            countryField.setEnabled(true);
+            variableField.setEnabled(true);
+            startDateField.setEnabled(false);
+            endDateField.setEnabled(false);
+        } else if (BY_COUNTRY_AND_DATES.equals(value)) {
+            // In this case we enable the country and the two dates and disable the variable
+            countryField.setEnabled(true);
+            variableField.setEnabled(false);
+            startDateField.setCaption("Start Date");
+            startDateField.setEnabled(true);
+            endDateField.setEnabled(true);
+        } else if (BY_VARIABLE_AND_DATE.equals(value)) {
+            // In this case we enable the variable and the first date and disable the country and the other date
+            countryField.setEnabled(false);
+            variableField.setEnabled(true);
+            startDateField.setCaption("Date");
+            startDateField.setEnabled(true);
+            endDateField.setEnabled(false);
+        }
+    }
+    
     private void createGraphForm() {
         // 1st) We create the form
         formLayout = new VerticalLayout();
@@ -127,48 +159,28 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
         countryContainer.setBeanIdProperty("numeric");
         countryContainer.addAll(EnumSet.allOf(CountryCode.class));
-        final ComboBox countryField = new ComboBox("Country", countryContainer);
+        countryField = new ComboBox(COUNTRY, countryContainer);
         countryField.setItemCaptionPropertyId("name");
         countryField.setConverter(new CountryFieldConverter());
         formLayout.addComponent(countryField);
 
         // 4th) We add the variable selector
-        final ComboBox variableField = new ComboBox("Variable", Arrays.asList(SocioeconomicVariable.values()));
+        variableField = new ComboBox("Variable", Arrays.asList(SocioeconomicVariable.values()));
         formLayout.addComponent(variableField);
 
         // 5th) We add the date selectors
-        final PopupDateField startDateField = new PopupDateField("Start Date");
+        startDateField = new PopupDateField("Start Date");
         startDateField.setResolution(Resolution.MONTH);
-        startDateField.setDateFormat("yyyy-MM");
+        startDateField.setDateFormat(YYYY_MM);
         formLayout.addComponent(startDateField);
-        final PopupDateField endDateField = new PopupDateField("End Date");
+        endDateField = new PopupDateField("End Date");
         endDateField.setResolution(Resolution.MONTH);
-        endDateField.setDateFormat("yyyy-MM");
+        endDateField.setDateFormat(YYYY_MM);
         formLayout.addComponent(endDateField);
 
         // 6th) We add now the behaviour of the option group
         selectionType.addValueChangeListener(event -> {
-            if (BY_COUNTRY_AND_VARIABLE.equals(event.getProperty().getValue())) {
-                // In this case we enable the country and variable and disable the dates
-                countryField.setEnabled(true);
-                variableField.setEnabled(true);
-                startDateField.setEnabled(false);
-                endDateField.setEnabled(false);
-            } else if (BY_COUNTRY_AND_DATES.equals(event.getProperty().getValue())) {
-                // In this case we enable the country and the two dates and disable the variable
-                countryField.setEnabled(true);
-                variableField.setEnabled(false);
-                startDateField.setCaption("Start Date");
-                startDateField.setEnabled(true);
-                endDateField.setEnabled(true);
-            } else if (BY_VARIABLE_AND_DATE.equals(event.getProperty().getValue())) {
-                // In this case we enable the variable and the first date and disable the country and the other date
-                countryField.setEnabled(false);
-                variableField.setEnabled(true);
-                startDateField.setCaption("Date");
-                startDateField.setEnabled(true);
-                endDateField.setEnabled(false);
-            }
+            changeAllowedFormFieldd(event.getProperty().getValue());
         });
 
         // 7th) We set the option group to the first option by default
@@ -178,38 +190,10 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         generateGraph = new Button("Generate Graph", GraphicResources.RUN_ICON);
         formLayout.addComponent(generateGraph);
         generateGraph.addClickListener(event -> {
-            CountryCode country = null;
-            if (countryField.isEnabled()) {
-                country = (CountryCode) countryField.getConvertedValue();
-                if (country == null) {
-                    new Notification("Failure", "You need to select a country", Notification.Type.ERROR_MESSAGE);
-                }
-            }
-            SocioeconomicVariable variable = null;
-            if (variableField.isEnabled()) {
-                variable = (SocioeconomicVariable) variableField.getValue();
-                if (variable == null) {
-                    new Notification("Failure", "You need to select a variable", Notification.Type.ERROR_MESSAGE);
-                }
-            }
-            Date startDate = null;
-            if (startDateField.isEnabled()) {
-                startDate = startDateField.getValue();
-                if (startDate == null) {
-                    new Notification("Failure", "You need to select a date", Notification.Type.ERROR_MESSAGE);
-                }
-            }
-            Date endDate = null;
-            if (endDateField.isEnabled()) {
-                endDate = endDateField.getValue();
-                if (endDate == null) {
-                    new Notification("Failure", "You need to select an end date", Notification.Type.ERROR_MESSAGE);
-                }
-            }
-            renderGraph(country, variable, startDate, endDate);
+            renderGraph();
         });
     }
-    
+
     private void createTableButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addStatistic = new Button("Add values", this);
@@ -221,6 +205,59 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         tableLayout.setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
     
+    /**
+     * Draws a bar graph comparing the values of a variable for a specific date for all countries
+     *
+     * @param variable
+     *            The variable for which we are comparing the countries
+     * @param startDate
+     *            The date for which we are running the comparison
+     * @return A bar graph showing the countries values
+     */
+    private Chart drawBar(SocioeconomicVariable variable, Date startDate) {
+        // In this case we generate a set of columns showing the value of the variable in that date for all countries
+        final ContainerDataSeries series = new ContainerDataSeries(new BeanItemContainer<>(CountryVariableValue.class, countryVariableValueService.listByVariableAndDate(variable, startDate)));
+        series.setXPropertyId("country");
+        series.setYPropertyId(VALUE);
+        series.setName(variable.getName());
+        
+        final Chart chart = new Chart(ChartType.BAR);
+        final Configuration configuration = chart.getConfiguration();
+        configuration.setTitle(variable.getName() + " - " + new SimpleDateFormat(YYYY_MM).format(startDate));
+        configuration.getxAxis().setTitle(COUNTRY);
+        configuration.getyAxis().setTitle(variable.getName() + " (" + variable.getUnit() + ")");
+        chart.getConfiguration().addSeries(series);
+
+        return chart;
+    }
+    
+    /**
+     * Draws an evolution SP line graph based on the changes of a variable through time for a country
+     *
+     * @param country
+     *            The country for which we are analysing the changes
+     * @param variable
+     *            The variable for which we are assesing the changes
+     * @return A chart displaying the evolution
+     */
+    private Chart drawSPLine(CountryCode country, SocioeconomicVariable variable) {
+        // In this case we generate a plot with the evolution of the variable in the country
+        final ContainerDataSeries series = new ContainerDataSeries(new BeanItemContainer<>(CountryVariableValue.class, countryVariableValueService.listByCountryAndVariable(country, variable)));
+        series.setXPropertyId("date");
+        series.setYPropertyId(VALUE);
+        series.setName(variable.getName());
+
+        final Chart chart = new Chart(ChartType.SPLINE);
+        final Configuration configuration = chart.getConfiguration();
+        configuration.setTitle(country.getName() + " - " + variable.getName());
+        configuration.getxAxis().setTitle("Date");
+        configuration.getxAxis().setType(AxisType.DATETIME);
+        configuration.getyAxis().setTitle(variable.getName() + " (" + variable.getUnit() + ")");
+        chart.getConfiguration().addSeries(series);
+
+        return chart;
+    }
+
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
@@ -245,7 +282,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the AttackersView we create the table and the buttons
      */
@@ -284,8 +321,8 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "country.name", "variable", "date", "value", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
-        table.setColumnHeaders(new String[] { "Country", "Variable", "Date", "Value", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
+        table.setVisibleColumns(new Object[] { "country.name", "variable", "date", VALUE, "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
+        table.setColumnHeaders(new String[] { COUNTRY, "Variable", "Date", "Value", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         // Now we refresh the content
@@ -301,36 +338,46 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         container.addAll(countryVariableValueService.list());
     }
     
-    private void renderGraph(CountryCode country, SocioeconomicVariable variable, Date startDate, Date endDate) {
-        // 1st) We retrieve the corresponding lists
+    /**
+     * It renders the graph depending on the user selection
+     */
+    private void renderGraph() {
+        // 1st) We retrieve the corresponding variable values
+        CountryCode country = null;
+        if (countryField.isEnabled()) {
+            country = (CountryCode) countryField.getConvertedValue();
+            if (country == null) {
+                new Notification(FAILURE, "You need to select a country", Notification.Type.ERROR_MESSAGE);
+            }
+        }
+        SocioeconomicVariable variable = null;
+        if (variableField.isEnabled()) {
+            variable = (SocioeconomicVariable) variableField.getValue();
+            if (variable == null) {
+                new Notification(FAILURE, "You need to select a variable", Notification.Type.ERROR_MESSAGE);
+            }
+        }
+        Date startDate = null;
+        if (startDateField.isEnabled()) {
+            startDate = startDateField.getValue();
+            if (startDate == null) {
+                new Notification(FAILURE, "You need to select a date", Notification.Type.ERROR_MESSAGE);
+            }
+        }
+        Date endDate = null;
+        if (endDateField.isEnabled()) {
+            endDate = endDateField.getValue();
+            if (endDate == null) {
+                new Notification(FAILURE, "You need to select an end date", Notification.Type.ERROR_MESSAGE);
+            }
+        }
+
+        // 2nd) We now render each of the chart types
         Chart chart = null;
         if (country != null && variable != null) {
-            // In this case we generate a plot with the evolution of the variable in the country
-            final ContainerDataSeries series = new ContainerDataSeries(new BeanItemContainer<>(CountryVariableValue.class, countryVariableValueService.listByCountryAndVariable(country, variable)));
-            series.setXPropertyId("date");
-            series.setYPropertyId("value");
-            series.setName(variable.getName());
-
-            chart = new Chart(ChartType.SPLINE);
-            final Configuration configuration = chart.getConfiguration();
-            configuration.setTitle(country.getName() + " - " + variable.getName());
-            configuration.getxAxis().setTitle("Date");
-            configuration.getxAxis().setType(AxisType.DATETIME);
-            configuration.getyAxis().setTitle(variable.getName() + " (" + variable.getUnit() + ")");
-            chart.getConfiguration().addSeries(series);
+            chart = drawSPLine(country, variable);
         } else if (variable != null && startDate != null) {
-            // In this case we generate a set of columns showing the value of the variable in that date for all countries
-            final ContainerDataSeries series = new ContainerDataSeries(new BeanItemContainer<>(CountryVariableValue.class, countryVariableValueService.listByVariableAndDate(variable, startDate)));
-            series.setXPropertyId("country");
-            series.setYPropertyId("value");
-            series.setName(variable.getName());
-            
-            chart = new Chart(ChartType.BAR);
-            final Configuration configuration = chart.getConfiguration();
-            configuration.setTitle(variable.getName() + " - " + new SimpleDateFormat("yyyy-MM").format(startDate));
-            configuration.getxAxis().setTitle("Country");
-            configuration.getyAxis().setTitle(variable.getName() + " (" + variable.getUnit() + ")");
-            chart.getConfiguration().addSeries(series);
+            chart = drawBar(variable, startDate);
         }
         // TODO: Continue here
         if (chart != null) {

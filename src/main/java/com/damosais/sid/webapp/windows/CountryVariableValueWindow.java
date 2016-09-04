@@ -46,10 +46,10 @@ public class CountryVariableValueWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(CountryVariableValueWindow.class);
     private static final long serialVersionUID = 7784870465344376142L;
     private final VerticalLayout content;
-    
+
     @Autowired
     private CountryVariableValueService countryVariableValueService;
-    
+
     /**
      * Creates a new window to add or edit country variable values
      */
@@ -62,7 +62,7 @@ public class CountryVariableValueWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-    
+
     /**
      * Creates the form to add or edit country variable values
      *
@@ -79,7 +79,7 @@ public class CountryVariableValueWindow extends Window {
         final BeanFieldGroup<CountryVariableValue> binder = new BeanFieldGroup<>(CountryVariableValue.class);
         binder.setItemDataSource(countryVariableValue);
         binder.setBuffered(true);
-        
+
         // 2dd) We add the country (due to the lack of a toString() that shows proper content we need this hack)
         final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
         countryContainer.setBeanIdProperty("numeric");
@@ -91,13 +91,13 @@ public class CountryVariableValueWindow extends Window {
         countryField.setNullSelectionAllowed(false);
         binder.bind(countryField, "country");
         form.addComponent(countryField);
-        
+
         // 3rd) We then add the type of variable
         final ComboBox variableField = new ComboBox("Variable", Arrays.asList(SocioeconomicVariable.values()));
         variableField.addValidator(new NullValidator("You need to select a variable", false));
         binder.bind(variableField, "variable");
         form.addComponent(variableField);
-
+        
         // 4th) We add the date
         final PopupDateField dateField = binder.buildAndBind("Date", "date", PopupDateField.class);
         dateField.addValidator(new NullValidator("You need to select a date", false));
@@ -105,14 +105,14 @@ public class CountryVariableValueWindow extends Window {
         dateField.setResolution(Resolution.MONTH);
         dateField.setWidth(100, Unit.PERCENTAGE);
         form.addComponent(dateField);
-
+        
         // 5th) We add the value of the variable
         final TextField valueField = binder.buildAndBind("Value", "value", TextField.class);
         valueField.addValidator(new NullValidator("You need to provide a value", false));
         valueField.setNullRepresentation("");
         binder.bind(valueField, "value");
         form.addComponent(valueField);
-
+        
         // 6th) We add a change value listener to the variable field so we can set the field range limits if any
         variableField.setImmediate(true);
         variableField.addValueChangeListener(event -> {
@@ -134,14 +134,14 @@ public class CountryVariableValueWindow extends Window {
                 });
             }
         });
-        
+
         // 5th) We clear the window contents and add everything in order
         content.removeAllComponents();
         content.addComponent(form);
-
+        
         // 6th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) countryStaticsView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -164,7 +164,7 @@ public class CountryVariableValueWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-    
+
     private void saveCountryVariableValue(CountryVariableValue commitedCountryVariableValue, boolean newItem, User user) {
         if (newItem) {
             commitedCountryVariableValue.setCreatedBy(user);
@@ -173,7 +173,7 @@ public class CountryVariableValueWindow extends Window {
         }
         countryVariableValueService.save(commitedCountryVariableValue);
     }
-    
+
     /**
      * Prepares the window to add a new country variable value
      *
@@ -185,7 +185,7 @@ public class CountryVariableValueWindow extends Window {
         final CountryVariableValue newCountryVariableValue = new CountryVariableValue();
         createCountryVariableValueForm(newCountryVariableValue, countryStatisticsView, true);
     }
-
+    
     /**
      * Prepares the window to edit an existing country variable value
      *

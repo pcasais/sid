@@ -44,10 +44,10 @@ public class TargetWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(TargetWindow.class);
     private static final long serialVersionUID = 8434835262821274799L;
     private final VerticalLayout content;
-    
+
     @Autowired
     private TargetService targetService;
-
+    
     /**
      * Creates a new window to add or edit targets
      */
@@ -60,7 +60,7 @@ public class TargetWindow extends Window {
         content.setMargin(true);
         setContent(content);
     }
-
+    
     /**
      * Creates the form to add or edit targets
      *
@@ -78,13 +78,13 @@ public class TargetWindow extends Window {
         final BeanFieldGroup<Target> binder = new BeanFieldGroup<>(Target.class);
         binder.setItemDataSource(target);
         binder.setBuffered(true);
-        
+
         // 2nd) We set the site name
         final TextField nameField = binder.buildAndBind("Site Name", "siteName", TextField.class);
         nameField.addValidator(new NullValidator("You need to specify a site name", false));
         nameField.setNullRepresentation("");
         form.addComponent(nameField);
-        
+
         // 3rd) We create the field with the IPs (which is a custom field)
         final IPsField ipsField = new IPsField();
         ipsField.addValidator(value -> {
@@ -95,7 +95,7 @@ public class TargetWindow extends Window {
         ipsField.setConverter(new ArrayListFieldConverter());
         binder.bind(ipsField, "ips");
         form.addComponent(ipsField);
-        
+
         // 4th) We now add the country (due to the lack of a toString() that shows proper content we need this hack)
         final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
         countryContainer.setBeanIdProperty("numeric");
@@ -106,14 +106,14 @@ public class TargetWindow extends Window {
         countryField.setConverter(new CountryFieldConverter());
         binder.bind(countryField, "country");
         form.addComponent(countryField);
-        
+
         // 5th) We clear the form and add the elements to it
         content.removeAllComponents();
         content.addComponent(form);
-        
+
         // 6th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) ownersView.getUI()).getUser();
-        if (user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (user.getRole() == UserRole.EDIT_DATA) {
             final Button saveButton = new Button("Save", event -> {
                 try {
                     binder.commit();
@@ -136,7 +136,7 @@ public class TargetWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
+    
     private Target saveTarget(Target commitedTarget, boolean newItem, User user) {
         if (newItem) {
             commitedTarget.setCreatedBy(user);
@@ -146,7 +146,7 @@ public class TargetWindow extends Window {
         targetService.save(commitedTarget);
         return commitedTarget;
     }
-    
+
     /**
      * Prepares the window to add a new target to an owner
      *
@@ -161,7 +161,7 @@ public class TargetWindow extends Window {
         newTarget.setOwner(owner);
         createTargetForm(newTarget, ownersView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing target of an owner
      *

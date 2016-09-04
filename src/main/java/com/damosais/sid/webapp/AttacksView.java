@@ -53,19 +53,19 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
     private Button addEvent;
     private FilterTable attacksTable;
     private FilterTable eventsTable;
-
+    
     @Autowired
     private AttackService attackService;
-
+    
     @Autowired
     private EventService eventService;
-    
+
     @Autowired
     private AttackWindow attackWindow;
-    
+
     @Autowired
     private AddEventToAttackWindow addEventWindow;
-    
+
     /**
      * The constructor just sets the spacing and the margin
      */
@@ -73,15 +73,15 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         setSpacing(true);
         setMargin(true);
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
         final User user = ((WebApplication) getUI()).getUser();
-        if (addAttack.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+        if (addAttack.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             attackWindow.setAddMode(this);
             getUI().addWindow(attackWindow);
-        } else if (addEvent.equals(button) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+        } else if (addEvent.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             final Attack attack = (Attack) attacksTable.getValue();
             if (attack == null) {
                 new Notification("Missing attack", "To add an event you need to select an attack first. Please click on an attack and try again", Type.ERROR_MESSAGE).show(getUI().getPage());
@@ -97,14 +97,14 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
                 if (GraphicResources.EDIT_ICON.equals(button.getIcon())) {
                     attackWindow.setEditMode(attack, this);
                     getUI().addWindow(attackWindow);
-                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+                } else if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRole() == UserRole.EDIT_DATA) {
                     attackService.delete(attack);
                     refreshAttacksTableContent();
                     refreshEventsTableContent(null);
                 }
             } else if (item instanceof com.damosais.sid.database.beans.Event) {
                 final com.damosais.sid.database.beans.Event eventToAlter = (com.damosais.sid.database.beans.Event) item;
-                if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRoles().contains(UserRole.EDIT_DATA)) {
+                if (GraphicResources.DELETE_ICON.equals(button.getIcon()) && user.getRole() == UserRole.EDIT_DATA) {
                     final Attack attack = eventToAlter.getAttack();
                     attack.getEvents().remove(eventToAlter);
                     eventToAlter.setAttack(null);
@@ -115,7 +115,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
             }
         }
     }
-    
+
     private void createButtons() {
         addAttack = new Button("Add attak", this);
         addAttack.setStyleName("link");
@@ -124,12 +124,12 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         addEvent.setStyleName("link");
         addEvent.setIcon(GraphicResources.ADD_ICON);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-    
+
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
         // First we create a button and set its data with the Computer
@@ -152,7 +152,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -169,7 +169,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         setComponentAlignment(addAttack, Alignment.TOP_CENTER);
         addComponent(attacksTable);
         setComponentAlignment(attacksTable, Alignment.TOP_CENTER);
-
+        
         final Label eventsLabel = new Label("<center><p>In the <b>Events</b> you can review the existing events and its definitions.<br/>Once you have selected an attack in the above table you will be able to assign and remove events that belong to it in the table below.</p></center>", ContentMode.HTML);
         addComponent(eventsLabel);
         addComponent(addEvent);
@@ -177,7 +177,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         addComponent(eventsTable);
         setComponentAlignment(eventsTable, Alignment.MIDDLE_CENTER);
     }
-    
+
     private void initializeTables() {
         // We create the tables
         attacksTable = new FilterTable();
@@ -218,7 +218,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         refreshAttacksTableContent();
         refreshEventsTableContent(null);
     }
-
+    
     /**
      * Refreshes the table with the attacks data
      */
@@ -227,7 +227,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         attacksContainer.removeAllItems();
         attacksContainer.addAll(attackService.list());
     }
-
+    
     /**
      * Refreshes the table with the events data
      *
