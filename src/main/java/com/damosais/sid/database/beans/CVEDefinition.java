@@ -17,6 +17,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 
 /**
@@ -33,84 +34,86 @@ public class CVEDefinition {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
-    
+
     @Column(name = "name", nullable = false)
     private String name;
-    
+
     @Column(name = "published", nullable = false)
     private Date published;
-
+    
     @Column(name = "modified")
     private Date modified;
-
+    
     @Column(name = "cveDesc", nullable = false)
+    @Type(type = "text")
     private String cveDesc;
-
+    
     @Column(name = "nvdDesc")
+    @Type(type = "text")
     private String nvdDesc;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "severity", nullable = false)
     private Severity severity;
-
+    
     @Column(name = "cvssBaseScore", nullable = false)
     private Float cvssBaseScore;
-
+    
     @Column(name = "cvssExploitSubscore", nullable = false)
     private Float cvssExploitSubscore;
-
+    
     @Column(name = "cvssImpactSubscore", nullable = false)
     private Float cvssImpactSubscore;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "accessVector", nullable = false)
     private AccessVector accessVector;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "accessComplexity", nullable = false)
     private AccessComplexity accessComplexity;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "authentication", nullable = false)
     private Authentication authentication;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "confImpact", nullable = false)
     private Impact confImpact;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "integImpact", nullable = false)
     private Impact integImpact;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "availImpact", nullable = false)
     private Impact availImpact;
-
+    
     @OneToOne(mappedBy = "definition", cascade = CascadeType.ALL)
     private LossType lossType;
-
+    
     @OneToOne(mappedBy = "definition", cascade = CascadeType.ALL)
     private RangeType rangeType;
-
+    
     @OneToOne(mappedBy = "definition", cascade = CascadeType.ALL)
     private Vulnerability vulnerability;
-
+    
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
-
+    
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
-
+    
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-    
+
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -216,99 +219,99 @@ public class CVEDefinition {
         }
         return true;
     }
-    
+
     public AccessComplexity getAccessComplexity() {
         return accessComplexity;
     }
-
+    
     public AccessVector getAccessVector() {
         return accessVector;
     }
-    
+
     public Authentication getAuthentication() {
         return authentication;
     }
-    
+
     public Impact getAvailImpact() {
         return availImpact;
     }
-    
+
     public Impact getConfImpact() {
         return confImpact;
     }
-    
+
     public Date getCreated() {
         return created;
     }
-    
+
     public User getCreatedBy() {
         return createdBy;
     }
-    
+
     public String getCveDesc() {
         return cveDesc;
     }
-    
+
     public Float getCvssBaseScore() {
         return cvssBaseScore;
     }
-    
+
     public Float getCvssExploitSubscore() {
         return cvssExploitSubscore;
     }
-
+    
     public Float getCvssImpactSubscore() {
         return cvssImpactSubscore;
     }
-    
+
     public Long getId() {
         return id;
     }
-
+    
     public Impact getIntegImpact() {
         return integImpact;
     }
-
+    
     public LossType getLossType() {
         return lossType;
     }
-
+    
     public Date getModified() {
         return modified;
     }
-
+    
     public String getName() {
         return name;
     }
-
+    
     public String getNvdDesc() {
         return nvdDesc;
     }
-
+    
     public Date getPublished() {
         return published;
     }
-
+    
     public RangeType getRangeType() {
         return rangeType;
     }
-
+    
     public Severity getSeverity() {
         return severity;
     }
-
+    
     public Date getUpdated() {
         return updated;
     }
-
+    
     public User getUpdatedBy() {
         return updatedBy;
     }
-
+    
     public Vulnerability getVulnerability() {
         return vulnerability;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -332,99 +335,99 @@ public class CVEDefinition {
         result = prime * result + (severity == null ? 0 : severity.hashCode());
         return result;
     }
-
+    
     public void setAccessComplexity(AccessComplexity accessComplexity) {
         this.accessComplexity = accessComplexity;
     }
-
+    
     public void setAccessVector(AccessVector accessVector) {
         this.accessVector = accessVector;
     }
-
+    
     public void setAuthentication(Authentication authentication) {
         this.authentication = authentication;
     }
-
+    
     public void setAvailImpact(Impact availImpact) {
         this.availImpact = availImpact;
     }
-
+    
     public void setConfImpact(Impact confImpact) {
         this.confImpact = confImpact;
     }
-
+    
     public void setCreated(Date created) {
         this.created = created;
     }
-
+    
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
-
+    
     public void setCveDesc(String cveDesc) {
         this.cveDesc = cveDesc;
     }
-
+    
     public void setCvssBaseScore(Float cvssBaseScore) {
         this.cvssBaseScore = cvssBaseScore;
     }
-
+    
     public void setCvssExploitSubscore(Float cvssExploitSubscore) {
         this.cvssExploitSubscore = cvssExploitSubscore;
     }
-
+    
     public void setCvssImpactSubscore(Float cvssImpactSubscore) {
         this.cvssImpactSubscore = cvssImpactSubscore;
     }
-
+    
     public void setId(Long id) {
         this.id = id;
     }
-
+    
     public void setIntegImpact(Impact integImpact) {
         this.integImpact = integImpact;
     }
-
+    
     public void setLossType(LossType lossType) {
         this.lossType = lossType;
     }
-
+    
     public void setModified(Date modified) {
         this.modified = modified;
     }
-
+    
     public void setName(String name) {
         this.name = name;
     }
-
+    
     public void setNvdDesc(String nvdDesc) {
         this.nvdDesc = nvdDesc;
     }
-
+    
     public void setPublished(Date published) {
         this.published = published;
     }
-
+    
     public void setRangeType(RangeType rangeType) {
         this.rangeType = rangeType;
     }
-
+    
     public void setSeverity(Severity severity) {
         this.severity = severity;
     }
-
+    
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
-
+    
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
-
+    
     public void setVulnerability(Vulnerability vulnerability) {
         this.vulnerability = vulnerability;
     }
-
+    
     @Override
     public String toString() {
         return name;

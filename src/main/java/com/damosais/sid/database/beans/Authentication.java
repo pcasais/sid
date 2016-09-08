@@ -27,7 +27,7 @@ public enum Authentication {
      *            the numeric representation
      * @return the Authentication that has this numeric representation or null if none
      */
-    public Authentication getByCode(int code) {
+    public static Authentication getByCode(int code) {
         Authentication match = null;
         for (final Authentication authentication : Authentication.values()) {
             if (authentication.code == code) {
@@ -45,7 +45,7 @@ public enum Authentication {
      *            the XML representation
      * @return the Authentication that has this XML representation or null if none
      */
-    public Authentication getByXmlCode(String xmlCode) {
+    public static Authentication getByXmlCode(String xmlCode) {
         Authentication match = null;
         for (final Authentication authentication : Authentication.values()) {
             if (authentication.xmlCode.equalsIgnoreCase(xmlCode)) {

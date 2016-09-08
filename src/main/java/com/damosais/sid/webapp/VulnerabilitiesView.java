@@ -1,9 +1,18 @@
 package com.damosais.sid.webapp;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+
 import javax.annotation.PostConstruct;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tepi.filtertable.FilterTable;
+import org.xml.sax.SAXException;
 
 import com.damosais.sid.database.beans.CVEDefinition;
 import com.damosais.sid.database.beans.User;
@@ -11,6 +20,7 @@ import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.beans.Vulnerability;
 import com.damosais.sid.database.services.CVEDefinitionService;
 import com.damosais.sid.database.services.VulnerabilityService;
+import com.damosais.sid.parsers.CVENVDParser;
 import com.damosais.sid.webapp.windows.CVEWindow;
 import com.damosais.sid.webapp.windows.VulnerabilityWindow;
 import com.vaadin.data.util.BeanItem;
@@ -27,6 +37,12 @@ import com.vaadin.ui.CustomTable;
 import com.vaadin.ui.CustomTable.ColumnGenerator;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
+import com.vaadin.ui.Upload;
+import com.vaadin.ui.Upload.FailedEvent;
+import com.vaadin.ui.Upload.Receiver;
+import com.vaadin.ui.Upload.StartedEvent;
+import com.vaadin.ui.Upload.SucceededEvent;
 import com.vaadin.ui.VerticalLayout;
 
 /**
@@ -37,41 +53,52 @@ import com.vaadin.ui.VerticalLayout;
  * @since 1.0
  */
 @SpringView(name = VulnerabilitiesView.VIEW_NAME)
-public class VulnerabilitiesView extends VerticalLayout implements View, ClickListener, ColumnGenerator {
+public class VulnerabilitiesView extends VerticalLayout implements View, ClickListener, ColumnGenerator, Receiver, Upload.StartedListener, Upload.FailedListener, Upload.SucceededListener {
+    private static final Logger LOGGER = Logger.getLogger(VulnerabilitiesView.class);
     private static final long serialVersionUID = 4990531322527027247L;
     public static final String VIEW_NAME = "VulnerabilitiesScreen";
     private static final String EDIT_BUTTON = "editButton";
     private static final String DELETE_BUTTON = "deleteButton";
     private static final String UPDATED_BY_NAME = "updatedBy.name";
     private static final String CREATED_BY_NAME = "createdBy.name";
+    private static final String FAILURE = "Failure";
     private BeanItemContainer<Vulnerability> vulnerabilityContainer;
     private BeanItemContainer<CVEDefinition> cveContainer;
     private Button addVulnerability;
     private Button addCVE;
-    private Button updateCVEs;
+    private Upload updateCVEs;
     private FilterTable vulnerabilityTable;
     private FilterTable cveTable;
-
+    private File tempXML;
+    private BufferedWriter bufferedWriter;
+    private CVENVDParser cveNvdParser;
+    
     @Autowired
     private VulnerabilityService vulnerabilityService;
-    
+
     @Autowired
     private CVEDefinitionService cveDefinitionService;
-
-    @Autowired
-    private VulnerabilityWindow vulnerabilityWindow;
     
     @Autowired
-    private CVEWindow cveWindow;
+    private VulnerabilityWindow vulnerabilityWindow;
 
+    @Autowired
+    private CVEWindow cveWindow;
+    
     /**
-     * The constructor just sets the spacing and the margins
+     * The constructor just sets the spacing and the margins and initialises the parser
      */
     public VulnerabilitiesView() {
         setSpacing(true);
         setMargin(true);
+        try {
+            cveNvdParser = new CVENVDParser();
+        } catch (final SAXException e) {
+            new Notification(FAILURE, "Error creating CVE NVD parser: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+            LOGGER.error("Problem creating CVE NVD parser", e);
+        }
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -106,7 +133,19 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
             }
         }
     }
-    
+
+    private void closeTempXmlWriter() {
+        if (bufferedWriter != null) {
+            try {
+                bufferedWriter.close();
+            } catch (final IOException e) {
+                LOGGER.error("Problem closing temp file", e);
+                new Notification(FAILURE, "Error closing temp file: " + tempXML.getName(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+            }
+            bufferedWriter = null;
+        }
+    }
+
     private void createButtons() {
         addVulnerability = new Button("Add vulnerability", this);
         addVulnerability.setStyleName("link");
@@ -114,11 +153,14 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         addCVE = new Button("Add CVE", this);
         addCVE.setStyleName("link");
         addCVE.setIcon(GraphicResources.ADD_ICON);
-        updateCVEs = new Button("Update CVEs from file", this);
-        updateCVEs.setStyleName("link");
-        updateCVEs.setIcon(GraphicResources.UPLOAD_ICON);
+        updateCVEs = new Upload(null, this);
+        updateCVEs.addStartedListener(this);
+        updateCVEs.addFailedListener(this);
+        updateCVEs.addSucceededListener(this);
+        updateCVEs.setButtonCaption("Update CVEs from file");
+        updateCVEs.setImmediate(true);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         // Nothing to do when entering the view
@@ -147,7 +189,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -164,7 +206,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         setComponentAlignment(addVulnerability, Alignment.TOP_CENTER);
         addComponent(vulnerabilityTable);
         setComponentAlignment(vulnerabilityTable, Alignment.TOP_CENTER);
-        
+
         final Label cveLabel = new Label("<center><p>A <b>CVE</b> is a common identifier used by the US-CERT to categorise vulnerabilities. A CVE definition contains an ID and standardised details of a vulnerability.<br/> Below you can see the current known CVE definitions, you can edit, add, delete or upload definitions</p></center>", ContentMode.HTML);
         addComponent(cveLabel);
         final HorizontalLayout cveButtons = new HorizontalLayout();
@@ -176,12 +218,13 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         addComponent(cveTable);
         setComponentAlignment(cveTable, Alignment.MIDDLE_CENTER);
     }
-
+    
     private void initializeTables() {
         // We create the tables
         vulnerabilityTable = new FilterTable();
         vulnerabilityTable.setFilterBarVisible(true);
         cveTable = new FilterTable();
+        cveTable.setWidth(100, Unit.PERCENTAGE);
         cveTable.setFilterBarVisible(true);
         // We add a column with the button to edit the details
         vulnerabilityTable.addGeneratedColumn(EDIT_BUTTON, this);
@@ -213,7 +256,17 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         refreshVulnerabilitiesTableContent();
         refreshCVEsTableContent();
     }
-
+    
+    @Override
+    public OutputStream receiveUpload(String filename, String mimeType) {
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                bufferedWriter.write(b);
+            }
+        };
+    }
+    
     /**
      * Refreshes the table with the targets data
      *
@@ -224,7 +277,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         cveContainer.removeAllItems();
         cveContainer.addAll(cveDefinitionService.list());
     }
-
+    
     /**
      * Refreshes the table with the vulnerabilities data
      */
@@ -232,5 +285,47 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         // We first create the container with all the owners and assign it to the table
         vulnerabilityContainer.removeAllItems();
         vulnerabilityContainer.addAll(vulnerabilityService.list());
+    }
+    
+    @Override
+    public void uploadFailed(FailedEvent event) {
+        closeTempXmlWriter();
+        if (tempXML.exists() && !tempXML.delete()) {
+            new Notification(FAILURE, "Error deleting temp file: " + tempXML.getName(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+        }
+        new Notification(FAILURE, "Error uploading file: " + event.getReason().getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+    }
+    
+    @Override
+    public void uploadStarted(StartedEvent event) {
+        try {
+            tempXML = File.createTempFile("tempUpload", ".xml");
+            bufferedWriter = new BufferedWriter(new FileWriter(tempXML));
+        } catch (final IOException e) {
+            new Notification(FAILURE, "Error creating temporary file for upload: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+            LOGGER.error("Error creating temporary file for upload", e);
+        }
+    }
+    
+    @Override
+    public void uploadSucceeded(SucceededEvent event) {
+        closeTempXmlWriter();
+        try {
+            final List<CVEDefinition> parsedDefinitions = cveNvdParser.parse(tempXML);
+            final List<String> errors = cveDefinitionService.update(parsedDefinitions, ((WebApplication) getUI()).getUser());
+            if (errors != null && !errors.isEmpty()) {
+                new Notification(FAILURE, "The following errors were found when saving the CVE definitions: " + errors, Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+            } else {
+                new Notification("Success", parsedDefinitions.size() + " CVE definitions parsed and uploaded", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
+            }
+            refreshCVEsTableContent();
+        } catch (final SAXException e) {
+            new Notification(FAILURE, "Error parsing uploaded file: " + e.getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+            LOGGER.error("Error creating temporary file for upload", e);
+        } finally {
+            if (tempXML.exists() && !tempXML.delete()) {
+                new Notification(FAILURE, "Error deleting temp file: " + tempXML.getName(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+            }
+        }
     }
 }

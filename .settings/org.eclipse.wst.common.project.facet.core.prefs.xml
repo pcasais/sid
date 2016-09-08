@@ -1,7 +1,7 @@
 <root>
   <facet id="jpt.jaxb">
     <node name="classgen">
-      <attribute name="package" value="com.damosais.sid.database.beans.vulnerability"/>
+      <attribute name="package" value="com.damosais.sid.crap"/>
     </node>
   </facet>
 </root>

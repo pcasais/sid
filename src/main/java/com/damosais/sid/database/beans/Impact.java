@@ -27,7 +27,7 @@ public enum Impact {
      *            the numeric representation
      * @return the Impact that has this numeric representation or null if none
      */
-    public Impact getByCode(int code) {
+    public static Impact getByCode(int code) {
         Impact match = null;
         for (final Impact impact : Impact.values()) {
             if (impact.code == code) {
@@ -45,7 +45,7 @@ public enum Impact {
      *            the XML representation
      * @return the Impact that has this XML representation or null if none
      */
-    public Impact getByXmlCode(String xmlCode) {
+    public static Impact getByXmlCode(String xmlCode) {
         Impact match = null;
         for (final Impact impact : Impact.values()) {
             if (impact.xmlCode.equalsIgnoreCase(xmlCode)) {

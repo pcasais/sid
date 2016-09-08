@@ -27,7 +27,7 @@ public enum AccessVector {
      *            the numeric representation
      * @return the AccessVector that has this numeric representation or null if none
      */
-    public AccessVector getByCode(int code) {
+    public static AccessVector getByCode(int code) {
         AccessVector match = null;
         for (final AccessVector vector : AccessVector.values()) {
             if (vector.code == code) {
@@ -45,7 +45,7 @@ public enum AccessVector {
      *            the XML representation
      * @return the AccessVector that has this XML representation or null if none
      */
-    public AccessVector getByXmlCode(String xmlCode) {
+    public static AccessVector getByXmlCode(String xmlCode) {
         AccessVector match = null;
         for (final AccessVector vector : AccessVector.values()) {
             if (vector.xmlCode.equalsIgnoreCase(xmlCode)) {

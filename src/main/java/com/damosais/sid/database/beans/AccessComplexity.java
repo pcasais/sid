@@ -27,7 +27,7 @@ public enum AccessComplexity {
      *            The numeric representation
      * @return the AccessComplexity that has this numeric representation or null if none
      */
-    public AccessComplexity getByCode(int code) {
+    public static AccessComplexity getByCode(int code) {
         AccessComplexity match = null;
         for (final AccessComplexity complexity : AccessComplexity.values()) {
             if (complexity.code == code) {
@@ -45,7 +45,7 @@ public enum AccessComplexity {
      *            The XML representation
      * @return the AccessComplexity that has this XML representation or null if none
      */
-    public AccessComplexity getByXmlCode(String xmlCode) {
+    public static AccessComplexity getByXmlCode(String xmlCode) {
         AccessComplexity match = null;
         for (final AccessComplexity complexity : AccessComplexity.values()) {
             if (complexity.xmlCode.equalsIgnoreCase(xmlCode)) {
