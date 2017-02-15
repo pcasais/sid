@@ -4,6 +4,9 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -77,10 +80,10 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
     private ComboBox variableField;
     private PopupDateField startDateField;
     private PopupDateField endDateField;
-    
+
     @Autowired
     private CountryVariableValueService countryVariableValueService;
-
+    
     @Autowired
     private CountryVariableValueWindow countryVariableValueWindow;
 
@@ -98,7 +101,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         graphLayout.setSpacing(true);
         addComponent(graphLayout);
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -118,7 +121,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
             }
         }
     }
-
+    
     private void changeAllowedFormFieldd(Object value) {
         if (BY_COUNTRY_AND_VARIABLE.equals(value)) {
             // In this case we enable the country and variable and disable the dates
@@ -142,19 +145,19 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
             endDateField.setEnabled(false);
         }
     }
-    
+
     private void createGraphForm() {
         // 1st) We create the form
         formLayout = new VerticalLayout();
         formLayout.setMargin(true);
         formLayout.setSpacing(true);
-
+        
         // 2nd) We add the selector of the type of search
         final OptionGroup selectionType = new OptionGroup("Search type");
         selectionType.addItems(BY_COUNTRY_AND_VARIABLE, BY_COUNTRY_AND_DATES, BY_VARIABLE_AND_DATE);
         selectionType.setImmediate(true);
         formLayout.addComponent(selectionType);
-
+        
         // 3rd) We add the country selector (We need a hack because it doesn't have a nice toString() method)
         final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
         countryContainer.setBeanIdProperty("numeric");
@@ -163,11 +166,11 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         countryField.setItemCaptionPropertyId("name");
         countryField.setConverter(new CountryFieldConverter());
         formLayout.addComponent(countryField);
-
+        
         // 4th) We add the variable selector
         variableField = new ComboBox("Variable", Arrays.asList(SocioeconomicVariable.values()));
         formLayout.addComponent(variableField);
-
+        
         // 5th) We add the date selectors
         startDateField = new PopupDateField("Start Date");
         startDateField.setResolution(Resolution.MONTH);
@@ -177,23 +180,19 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         endDateField.setResolution(Resolution.MONTH);
         endDateField.setDateFormat(YYYY_MM);
         formLayout.addComponent(endDateField);
-
+        
         // 6th) We add now the behaviour of the option group
-        selectionType.addValueChangeListener(event -> {
-            changeAllowedFormFieldd(event.getProperty().getValue());
-        });
-
+        selectionType.addValueChangeListener(event -> changeAllowedFormFieldd(event.getProperty().getValue()));
+        
         // 7th) We set the option group to the first option by default
         selectionType.setValue(BY_COUNTRY_AND_VARIABLE);
-
+        
         // 8th) We add the button to generate the graphs
         generateGraph = new Button("Generate Graph", GraphicResources.RUN_ICON);
         formLayout.addComponent(generateGraph);
-        generateGraph.addClickListener(event -> {
-            renderGraph();
-        });
+        generateGraph.addClickListener(event -> renderGraph());
     }
-
+    
     private void createTableButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addStatistic = new Button("Add values", this);
@@ -204,7 +203,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         tableLayout.addComponent(hl);
         tableLayout.setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-    
+
     /**
      * Draws a bar graph comparing the values of a variable for a specific date for all countries
      *
@@ -220,17 +219,17 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         series.setXPropertyId("country");
         series.setYPropertyId(VALUE);
         series.setName(variable.getName());
-        
+
         final Chart chart = new Chart(ChartType.BAR);
         final Configuration configuration = chart.getConfiguration();
         configuration.setTitle(variable.getName() + " - " + new SimpleDateFormat(YYYY_MM).format(startDate));
         configuration.getxAxis().setTitle(COUNTRY);
         configuration.getyAxis().setTitle(variable.getName() + " (" + variable.getUnit() + ")");
         chart.getConfiguration().addSeries(series);
-
+        
         return chart;
     }
-    
+
     /**
      * Draws an evolution SP line graph based on the changes of a variable through time for a country
      *
@@ -246,7 +245,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         series.setXPropertyId("date");
         series.setYPropertyId(VALUE);
         series.setName(variable.getName());
-
+        
         final Chart chart = new Chart(ChartType.SPLINE);
         final Configuration configuration = chart.getConfiguration();
         configuration.setTitle(country.getName() + " - " + variable.getName());
@@ -254,15 +253,15 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         configuration.getxAxis().setType(AxisType.DATETIME);
         configuration.getyAxis().setTitle(variable.getName() + " (" + variable.getUnit() + ")");
         chart.getConfiguration().addSeries(series);
-
+        
         return chart;
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-    
+
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -282,7 +281,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the AttackersView we create the table and the buttons
      */
@@ -302,7 +301,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         createGraphForm();
         graphLayout.addComponent(formLayout);
     }
-    
+
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
@@ -328,7 +327,56 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         // Now we refresh the content
         refreshTableContent();
     }
-    
+
+    /**
+     * This method processes the values read from the external file and inserts the correct objects in the database by updates or inserts
+     *
+     * @param readValues
+     *            the list of CountryVariableValue read from the external source
+     */
+    public void processReadValues(List<CountryVariableValue> readValues) {
+        // After we received some values is time to do a mix and see which ones are insert and which are updates
+        // 1st) We read the existing values and map them by socioeconomic variable and date
+        final Map<SocioeconomicVariable, Map<Date, CountryVariableValue>> mappedExistingValues = new HashMap<>();
+        for (final CountryVariableValue existingValue : countryVariableValueService.list()) {
+            Map<Date, CountryVariableValue> dateValues = mappedExistingValues.get(existingValue.getVariable());
+            if (dateValues == null) {
+                dateValues = new HashMap<>();
+                mappedExistingValues.put(existingValue.getVariable(), dateValues);
+            }
+            dateValues.put(existingValue.getDate(), existingValue);
+        }
+
+        // 2nd) Now we loop through the parsed values and check if they need to become an update or an insert
+        boolean valueChanged = false;
+        final User user = ((WebApplication) getUI()).getUser();
+        for (final CountryVariableValue readValue : readValues) {
+            // 2.1) We try to find the matching value
+            CountryVariableValue matching = null;
+            final Map<Date, CountryVariableValue> dateValues = mappedExistingValues.get(readValue.getVariable());
+            if (dateValues != null) {
+                matching = dateValues.get(readValue.getDate());
+            }
+            if (matching != null && readValue.getValue().compareTo(matching.getValue()) != 0) {
+                // 2.2) If is a match and the value is different we update the value and save it
+                matching.setValue(readValue.getValue());
+                matching.setUpdatedBy(user);
+                countryVariableValueService.save(matching);
+                valueChanged = true;
+            } else if (matching == null) {
+                // 2.3) If is a new value then we just put the data about its creator
+                readValue.setCreatedBy(user);
+                countryVariableValueService.save(readValue);
+                valueChanged = true;
+            }
+        }
+
+        // 3rd) We finally refresh the contents of the table
+        if (valueChanged) {
+            refreshTableContent();
+        }
+    }
+
     /**
      * It refreshes the content of the table
      */
@@ -337,7 +385,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
         container.removeAllItems();
         container.addAll(countryVariableValueService.list());
     }
-    
+
     /**
      * It renders the graph depending on the user selection
      */
@@ -371,7 +419,7 @@ public class CountryStatisticsView extends HorizontalSplitPanel implements View,
                 new Notification(FAILURE, "You need to select an end date", Notification.Type.ERROR_MESSAGE);
             }
         }
-
+        
         // 2nd) We now render each of the chart types
         Chart chart = null;
         if (country != null && variable != null) {

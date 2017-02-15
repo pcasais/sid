@@ -23,7 +23,7 @@ import com.neovisionaries.i18n.CountryCode;
 public class CountryVariableValueService {
     @Autowired
     private CountryVariableValueDAO countryVariableValueDao;
-
+    
     /**
      * Deletes an country variable value from the database
      *
@@ -33,7 +33,7 @@ public class CountryVariableValueService {
     public void delete(CountryVariableValue countryVariableValue) {
         countryVariableValueDao.delete(countryVariableValue);
     }
-
+    
     /**
      * Returns the existing country variable values in the database
      *
@@ -44,14 +44,16 @@ public class CountryVariableValueService {
         countryVariableValueDao.findAll().forEach(countryVariableValues::add);
         return countryVariableValues;
     }
-
+    
     /**
      * Returns the different country variable values for a specific country and date
      *
      * @param country
      *            The selected country
-     * @param date
-     *            The selected date
+     * @param start
+     *            The selected start date
+     * @param end
+     *            The selected end date
      * @return A list of the different country variable values
      */
     public List<CountryVariableValue> listByCountryAndDates(CountryCode country, Date start, Date end) {
@@ -59,7 +61,7 @@ public class CountryVariableValueService {
         countryVariableValueDao.findByCountryAndDateBetween(country, start, end).forEach(countryVariableValues::add);
         return countryVariableValues;
     }
-    
+
     /**
      * Returns the different year country variable values for a specific country and variable
      *
@@ -74,7 +76,7 @@ public class CountryVariableValueService {
         countryVariableValueDao.findByCountryAndVariableOrderByDate(country, variable).forEach(countryVariableValues::add);
         return countryVariableValues;
     }
-
+    
     /**
      * Returns the different country variable values for a specific variable and date
      *
@@ -89,7 +91,7 @@ public class CountryVariableValueService {
         countryVariableValueDao.findByVariableAndDate(variable, date).forEach(countryVariableValues::add);
         return countryVariableValues;
     }
-
+    
     /**
      * Saves an existing country variable value to the database
      *

@@ -35,44 +35,32 @@ public class LossTypeField extends CustomField<LossType> {
         content.setMargin(false);
         // In 0-0 we have the Availability check box
         availability = new CheckBox("Availability");
-        availability.addValueChangeListener(event -> {
-            lossType.setAvailability((Boolean) event.getProperty().getValue());
-        });
+        availability.addValueChangeListener(event -> lossType.setAvailability((Boolean) event.getProperty().getValue()));
         availability.setImmediate(true);
         // In 0-1 we have the confidentiality check box
         content.addComponent(availability, 0, 0);
         confidenciality = new CheckBox("Confidentiality");
-        confidenciality.addValueChangeListener(event -> {
-            lossType.setConfidentiality((Boolean) event.getProperty().getValue());
-        });
+        confidenciality.addValueChangeListener(event -> lossType.setConfidentiality((Boolean) event.getProperty().getValue()));
         confidenciality.setImmediate(true);
         content.addComponent(confidenciality, 0, 1);
         // In 0-2 we have the integrity check box
         integrity = new CheckBox("Integrity");
-        integrity.addValueChangeListener(event -> {
-            lossType.setIntegrity((Boolean) event.getProperty().getValue());
-        });
+        integrity.addValueChangeListener(event -> lossType.setIntegrity((Boolean) event.getProperty().getValue()));
         integrity.setImmediate(true);
         content.addComponent(integrity, 0, 2);
         // In 0-0 we have the Availability check box
         adminSecurityProtection = new CheckBox("Admin Security");
-        adminSecurityProtection.addValueChangeListener(event -> {
-            lossType.setAdminSecurityProtection((Boolean) event.getProperty().getValue());
-        });
+        adminSecurityProtection.addValueChangeListener(event -> lossType.setAdminSecurityProtection((Boolean) event.getProperty().getValue()));
         adminSecurityProtection.setImmediate(true);
         // In 0-1 we have the confidentiality check box
         content.addComponent(adminSecurityProtection, 1, 0);
         userSecurityProtection = new CheckBox("User Security");
-        userSecurityProtection.addValueChangeListener(event -> {
-            lossType.setUserSecurityProtection((Boolean) event.getProperty().getValue());
-        });
+        userSecurityProtection.addValueChangeListener(event -> lossType.setUserSecurityProtection((Boolean) event.getProperty().getValue()));
         userSecurityProtection.setImmediate(true);
         content.addComponent(userSecurityProtection, 1, 1);
         // In 0-2 we have the integrity check box
         otherSecurityProtection = new CheckBox("Other Security");
-        otherSecurityProtection.addValueChangeListener(event -> {
-            lossType.setOtherSecurityProtection((Boolean) event.getProperty().getValue());
-        });
+        otherSecurityProtection.addValueChangeListener(event -> lossType.setOtherSecurityProtection((Boolean) event.getProperty().getValue()));
         otherSecurityProtection.setImmediate(true);
         content.addComponent(otherSecurityProtection, 1, 2);
     }

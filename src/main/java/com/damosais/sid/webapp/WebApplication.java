@@ -3,6 +3,7 @@ package com.damosais.sid.webapp;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.damosais.sid.database.beans.User;
+import com.damosais.sid.webapp.windows.ImportSocioeconomicDataWindow;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.navigator.Navigator;
@@ -39,10 +40,12 @@ public class WebApplication extends UI {
     private VerticalLayout root;
     private Navigator navigator;
     private HorizontalLayout bar;
-    private MenuBar menuBar;
     
     @Autowired
     private SpringViewProvider viewProvider;
+
+    @Autowired
+    private ImportSocioeconomicDataWindow importSocioeconomicDataWindow;
     
     /**
      * Adds the menu on the top so the users can change the view
@@ -52,38 +55,25 @@ public class WebApplication extends UI {
             bar = new HorizontalLayout();
             bar.setWidth("100%");
 
-            menuBar = new MenuBar();
+            final MenuBar menuBar = new MenuBar();
             menuBar.setWidth(100.0f, Unit.PERCENTAGE);
-            menuBar.addItem("Events", selectedItem -> {
-                navigator.navigateTo(EventsView.VIEW_NAME);
-            });
-            menuBar.addItem("Attacks", selectedItem -> {
-                navigator.navigateTo(AttacksView.VIEW_NAME);
-            });
-            menuBar.addItem("Incidents", selectedItem -> {
-                navigator.navigateTo(IncidentsView.VIEW_NAME);
-            });
+            menuBar.addItem("Events", selectedItem -> navigator.navigateTo(EventsView.VIEW_NAME));
+            menuBar.addItem("Attacks", selectedItem -> navigator.navigateTo(AttacksView.VIEW_NAME));
+            menuBar.addItem("Incidents", selectedItem -> navigator.navigateTo(IncidentsView.VIEW_NAME));
             final MenuItem vulnerabilities = menuBar.addItem("Vulnerabilities", null, null);
-            vulnerabilities.addItem("Exploitation tools", selectedItem -> {
-                navigator.navigateTo(ToolsView.VIEW_NAME);
-            });
-            vulnerabilities.addItem("Vulnerabilities", selectedItem -> {
-                navigator.navigateTo(VulnerabilitiesView.VIEW_NAME);
-            });
+            vulnerabilities.addItem("Exploitation tools", selectedItem -> navigator.navigateTo(ToolsView.VIEW_NAME));
+            vulnerabilities.addItem("Vulnerabilities", selectedItem -> navigator.navigateTo(VulnerabilitiesView.VIEW_NAME));
             final MenuItem parties = menuBar.addItem("Involved parties", null, null);
-            parties.addItem("Attackers", selectedItem -> {
-                navigator.navigateTo(AttackersView.VIEW_NAME);
-            });
-            parties.addItem("Victims", selectedItem -> {
-                navigator.navigateTo(OwnersView.VIEW_NAME);
-            });
+            parties.addItem("Attackers", selectedItem -> navigator.navigateTo(AttackersView.VIEW_NAME));
+            parties.addItem("Victims", selectedItem -> navigator.navigateTo(OwnersView.VIEW_NAME));
             final MenuItem countries = menuBar.addItem("Country Information", null);
-            countries.addItem("Statistical data", selectedItem -> {
-                navigator.navigateTo(CountryStatisticsView.VIEW_NAME);
+            countries.addItem("Statistical data", selectedItem -> navigator.navigateTo(CountryStatisticsView.VIEW_NAME));
+            menuBar.addItem("Users", selectedItem -> navigator.navigateTo(UsersView.VIEW_NAME));
+            final MenuItem utilities = menuBar.addItem("Utilities", null);
+            utilities.addItem("Import Incidents", selectedItem -> {
+
             });
-            menuBar.addItem("Users", selectedItem -> {
-                navigator.navigateTo(UsersView.VIEW_NAME);
-            });
+            utilities.addItem("Import Socioeconomic data", selectedItem -> getUI().addWindow(importSocioeconomicDataWindow));
 
             final Button logout = new Button("Logout", event -> {
                 user = null;

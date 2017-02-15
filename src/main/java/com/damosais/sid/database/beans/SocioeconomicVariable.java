@@ -2,11 +2,11 @@ package com.damosais.sid.database.beans;
 
 public enum SocioeconomicVariable {
     //@formatter:off
-    GDP_CURRENT_DOLLARS("GDP at current dollars", "1000M $", 0d, null, "GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in current U.S. dollars. Dollar figures for GDP are converted from domestic currencies using single year official exchange rates. For a few countries where the official exchange rate does not reflect the rate effectively applied to actual foreign exchange transactions, an alternative conversion factor is used.", VariableType.ECONOMIC),
-    GDP_CONSTANT_DOLLARS("GDP at constant dollars", "1000M $", 0d, null, "GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated", VariableType.ECONOMIC),
-    GDP_PER_CAPITA_CURRENT_DOLLARS("GDP per capita at current dollars", "$", 0d, null, "GDP per capita is gross domestic product divided by midyear population. GDP is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in current U.S. dollars.", VariableType.ECONOMIC),
-    GDP_PER_CAPITA_CONSTANT_DOLLARS("GDP per capita at constant dollars", "$", 0d, null, "GDP per capita is gross domestic product divided by midyear population. GDP is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in constant 2010 U.S. dollars.", VariableType.ECONOMIC),
-    GDP_PER_CAPITA_PPP("GDP per capita PPP", "$", 0d, null, "GDP per capita based on purchasing power parity (PPP). PPP GDP is gross domestic product converted to international dollars using purchasing power parity rates. An international dollar has the same purchasing power over GDP as the U.S. dollar has in the United States. GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in constant 2011 international dollars.", VariableType.ECONOMIC),
+    GDP_CURRENT_DOLLARS("GDP at current USD $", "USD $", 0d, null, "GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in current U.S. dollars. Dollar figures for GDP are converted from domestic currencies using single year official exchange rates. For a few countries where the official exchange rate does not reflect the rate effectively applied to actual foreign exchange transactions, an alternative conversion factor is used.", VariableType.ECONOMIC),
+    GDP_CONSTANT_DOLLARS("GDP at constant 2010 USD $", "USD $", 0d, null, "GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated", VariableType.ECONOMIC),
+    GDP_PER_CAPITA_CURRENT_DOLLARS("GDP per capita at current USD $", "USD $", 0d, null, "GDP per capita is gross domestic product divided by midyear population. GDP is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in current U.S. dollars.", VariableType.ECONOMIC),
+    GDP_PER_CAPITA_CONSTANT_DOLLARS("GDP per capita at constant 2010 USD $", "USD $", 0d, null, "GDP per capita is gross domestic product divided by midyear population. GDP is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in constant 2010 U.S. dollars.", VariableType.ECONOMIC),
+    GDP_PER_CAPITA_PPP("GDP per capita PPP constant 2011 USD $", "USD $", 0d, null, "GDP per capita based on purchasing power parity (PPP). PPP GDP is gross domestic product converted to international dollars using purchasing power parity rates. An international dollar has the same purchasing power over GDP as the U.S. dollar has in the United States. GDP at purchaser's prices is the sum of gross value added by all resident producers in the economy plus any product taxes and minus any subsidies not included in the value of the products. It is calculated without making deductions for depreciation of fabricated assets or for depletion and degradation of natural resources. Data are in constant 2011 international dollars.", VariableType.ECONOMIC),
     INFLATION("Inflation", "%", null, null, "Inflation as measured by the consumer price index reflects the annual percentage change in the cost to the average consumer of acquiring a basket of goods and services that may be fixed or changed at specified intervals, such as yearly. The Laspeyres formula is generally used.", VariableType.ECONOMIC),
     CORE_INFLATION("Core inflation", "%", null, null, "Core inflation represents the long run trend in the price level. In measuring long run inflation, transitory price changes should be excluded. One way of accomplishing this is by excluding items frequently subject to volatile prices, like food and energy.", VariableType.ECONOMIC),
     INFORMATION_TECHNOLOGY_EXPORTS("Information technology exports", "%", 0d, 100d, "Information and communication technology goods exports include telecommunications, audio and video, computer and related equipment; electronic components; and other information and communication technology goods. Software is excluded.", VariableType.ECONOMIC),
@@ -22,8 +22,7 @@ public enum SocioeconomicVariable {
     FREEDOM_OF_PRESS("Freedom of press", "points", 0d, 100d, "The Index ranks 180 countries according to the level of freedom available to journalists. It is a snapshot of the media freedom situation based on an evaluation of pluralism, independence of the media, quality of legislative framework and safety of journalists in each country. It does not rank public policies even if governments obviously have a major impact on their country’s ranking", VariableType.POLITICAL),
     GOVERNMENT_EFFECTIVENESS("Government effectiveness", "points", -2.5d, 2.5d, "Government effectiveness captures perceptions of the quality of public services, the quality of the civil service and the degree of its independence from political pressures, the quality of policy formulation and implementation, and the credibility of the government's commitment to such policies.", VariableType.POLITICAL),
     POLITICAL_RIGHTS("Political rights", "points", 1d, 7d, "Civil and political rights are a class of rights that protect individuals' freedom from infringement by governments, social organizations, and private individuals. They ensure one's ability to participate in the civil and political life of the society and state without discrimination or repression. Political rights include natural justice (procedural fairness) in law, such as the rights of the accused, including the right to a fair trial; due process; the right to seek redress or a legal remedy; and rights of participation in civil society and politics such as freedom of association, the right to assemble, the right to petition, the right of self-defense, and the right to vote.", VariableType.POLITICAL),
-    POLITICAL_RISK_LONG_TERM("Political risk long-term", "points", 1d, 7d, "Long Term political risk = Political risk related to export transactions with a credit period of more than two years. Political risk covers the risks of foreign exchange shortages, wars, revolutions, natural disasters and arbitrary government actions. Countries are classified into seven categories (from 1-low risk to 7-high risk) reflecting the intensity of political risk.", VariableType.POLITICAL),
-    POLITICAL_RISK_SHORT_TERM("Political risk short-term", "points", 1d, 7d, "Short Term political risk = Political risk related to short-term export transactions. Political risk covers the risks of foreign exchange shortages, wars, revolutions, natural disasters and arbitrary government actions. Countries are classified into seven categories (from 1-low risk to 7-high risk) reflecting the intensity of political risk.", VariableType.POLITICAL),
+    POLITICAL_RISK("Political risk", "points", 0d, 100d, "Political risk = Political risk covers the risks of foreign exchange shortages, wars, revolutions, natural disasters and arbitrary government actions. Countries are classified by points (from 0-low risk to 100-high risk) reflecting the intensity of political risk.", VariableType.POLITICAL),
     POLITICAL_STABILITY("Political stability", "points", -2.5d, 2.5d, "Political Stability and Absence of Violence/Terrorism measures perceptions of the likelihood of political instability and/or politically-motivated violence, including terrorism", VariableType.POLITICAL),
     RULE_OF_LAW("Rule of law", "points", -2.5d, 2.5d, "Rule of law captures perceptions of the extent to which agents have confidence in and abide by the rules of society, and in particular the quality of contract enforcement, property rights, the police, and the courts, as well as the likelihood of crime and violence", VariableType.POLITICAL),
     WAR_RISK("War risk", "points", 1d, 7d, " War risk covers the risks of external conflicts and the risks of domestic political violence. Domestic political violence includes terrorism, civil unrest, socio-economic conflicts, racial and ethnic tension and the extreme case of civil war. Countries are classified into seven categories (from 1-low risk to 7-high risk) reflecting the intensity of war risk.", VariableType.POLITICAL),
@@ -43,14 +42,14 @@ public enum SocioeconomicVariable {
     TERTIARY_SCHOOL_ENROLLMENT("Tertiary school enrollment", "%", 0d, null, "Total enrollment in tertiary education (ISCED 5 to 8), regardless of age, expressed as a percentage of the total population of the five-year age group following on from secondary school leaving.", VariableType.SOCIAL),
     THEFT_RATE("Theft rate", "thefts per 100K people", 0d, null, "Measues the number of thefts per 100,000 people", VariableType.SOCIAL);
     //@formatter:on
-
+    
     private final String name;
     private final String unit;
     private final Double min;
     private final Double max;
     private final String definition;
     private final VariableType type;
-
+    
     private SocioeconomicVariable(String name, String unit, Double min, Double max, String definition, VariableType type) {
         this.name = name;
         this.unit = unit;
@@ -59,31 +58,31 @@ public enum SocioeconomicVariable {
         this.definition = definition;
         this.type = type;
     }
-
+    
     public String getDefinition() {
         return definition;
     }
-
+    
     public Double getMax() {
         return max;
     }
-    
+
     public Double getMin() {
         return min;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public VariableType getType() {
         return type;
     }
-
+    
     public String getUnit() {
         return unit;
     }
-
+    
     @Override
     public String toString() {
         return name;

@@ -2,7 +2,7 @@ package com.damosais.sid.database.beans;
 
 /**
  * This class represents the different types of sectors on which the owner of a target (victim) operates
- * 
+ *
  * @author Pablo Casais Solano
  * @version 1.0
  * @since 1.0
@@ -11,6 +11,14 @@ public enum Sector {
     //@formatter:off
 	ROOT(null, "Root"),
 		INDIVIDUAL(ROOT, "Individual"),
+		    CRIMINALS(INDIVIDUAL, "Criminals"),
+		ASSOCIATIONS(ROOT, "Associations"),
+		    CHARITY(ASSOCIATIONS, "Charity"),
+		    CHURCHES(ASSOCIATIONS, "Churches"),
+		    MUSIC_BANDS(ASSOCIATIONS, "Music Bands"),
+		    SPORT_CLUBS(ASSOCIATIONS, "Sport Clubs"),
+		    TERRORISTS_AND_REBEL_FORCES(ASSOCIATIONS, "Terrorists and rebel forces"),
+		    THINK_TANKS_AND_LOBBIES(ASSOCIATIONS, "Think tanks and lobbies"),
 		INDUSTRY(ROOT, "Industry"),
 			BASIC_MATERIALS(INDUSTRY, "Basic Materials"),
 				BASIC_RESOURCES(BASIC_MATERIALS, "Basic Resources"),
@@ -59,8 +67,13 @@ public enum Sector {
 						PERSONAL_PRODUCTS(PERSONAL_GOODS, "Personal Products"),
 					TOBACCO(PERSONAL_AND_HOUSEHOLD_GOODS, "Tobacco"),
 			CONSUMER_SERVICES(INDUSTRY, "Consumer Services"),
+				HOUSING(CONSUMER_SERVICES, "Housing"),
+					LETTING_AGENCIES(HOUSING, "Letting Agencies"),
 				MEDIA(CONSUMER_SERVICES, "Media"),
 					BROADCASTING_AND_ENTERTAINMENT(MEDIA, "Broadcasting & Entertainment"),
+					    PRESS_AND_MAGAZINES(BROADCASTING_AND_ENTERTAINMENT,"Press and Magazines"),
+					    RADIO_CHANNELS(BROADCASTING_AND_ENTERTAINMENT, "Radio Channels"),
+					    TELEVISION_CHANNELS(BROADCASTING_AND_ENTERTAINMENT, "Television Channels"),
 					MEDIA_AGENCIES(MEDIA, "Media Agencies"),
 					PUBLISHING(MEDIA, "Publishing"),
 				RETAIL(CONSUMER_SERVICES, "Retail"),
@@ -111,6 +124,7 @@ public enum Sector {
 					PHARMACEUTICALS(PHARMACEUTICALS_AND_BIOTECHNOLOGY, "Pharmaceuticals"),
 			INDUSTRIALS(INDUSTRY, "Industrials"),
 				CONSTRUCTION_AND_MATERIALS(INDUSTRIALS, "Construction & Materials"),
+				    ARCHITECTURAL_SERVICES(CONSTRUCTION_AND_MATERIALS, "Architectural Services"),
 					BUILDING_MATERIALS_AND_FIXTURES(CONSTRUCTION_AND_MATERIALS, "Building Materials & Fixtures"),
 					HEAVY_CONSTRUCTION(CONSTRUCTION_AND_MATERIALS, "Heavy Construction"),
 				INDUSTRIAL_GOODS_AND_SERVICES(INDUSTRIALS, "Industrial Goods & Services"),
@@ -134,9 +148,10 @@ public enum Sector {
 						TRUCKING(INDUSTRIAL_TRANSPORTATION, "Trucking"),
 					SUPPORT_SERVICES(INDUSTRIAL_GOODS_AND_SERVICES, "Support Services"),
 						BUSINESS_SUPPORT_SERVICES(SUPPORT_SERVICES, "Business Support Services"),
-						BUSINESS_TRAINING_AND_EMPLOYMENT(SUPPORT_SERVICES, "Business Training & Employmt"),
+						BUSINESS_TRAINING_AND_EMPLOYMENT(SUPPORT_SERVICES, "Business Training & Employment"),
 						FINANCIAL_ADMINISTRATION(SUPPORT_SERVICES, "Financial Administration"),
 						INDUSTRIAL_SUPPLIERS(SUPPORT_SERVICES, "Industrial Suppliers"),
+						MARKETING_AND_EVENTS(SUPPORT_SERVICES, "Marketing & Events"),
 						WASTE_AND_DISPOSAL_SERVICES(SUPPORT_SERVICES, "Waste & Disposal Services"),
 			OIL_AND_GAS(INDUSTRY, "Oil & Gas"),
 				OIL_AND_GAS_PRODUCERS(OIL_AND_GAS, "Oil & Gas Producers"),
@@ -145,10 +160,17 @@ public enum Sector {
 				OIL_EQUIPMENT_SERVICES_AND_DISTRIBUTION(OIL_AND_GAS, "Oil Equipt, Services & Distribution"),
 					OIL_EQUIPMENT_AND_SERVICES(OIL_EQUIPMENT_SERVICES_AND_DISTRIBUTION, "Oil Equipment & Services"),
 					PIPELINES(OIL_EQUIPMENT_SERVICES_AND_DISTRIBUTION, "Pipelines"),
+			OTHER_SERVICES(INDUSTRY, "Other Services"),
+			    LEGAL_SERVICES(OTHER_SERVICES, "Legal Services"),
+	            STAFFING_AND_RECRUITING(OTHER_SERVICES, "Staffing and Recruiting"),
+	            SPECIALTY_TRAINING(OTHER_SERVICES, "Specialty training"),
 			TECHNOLOGY(INDUSTRY, "Technology"),
 				SOFTWARE_AND_COMPUTER_SERVICES(TECHNOLOGY, "Software & Computer Services"),
 					COMPUTER_SERVICES(SOFTWARE_AND_COMPUTER_SERVICES, "Computer Services"),
 					INTERNET(SOFTWARE_AND_COMPUTER_SERVICES, "Internet"),
+					    ECOMMERCE(INTERNET, "E-commerce"),
+					    PORNOGRAPHY_SITES(INTERNET, "Pornography Sites"),
+					    SOCIAL_NETWORKS(INTERNET, "Social Networks"),
 					SOFTWARE(SOFTWARE_AND_COMPUTER_SERVICES, "Software"),
 				TECHNOLOGY_HARDWARE_AND_EQUIPMENT(TECHNOLOGY, "Technology Hardware & Equipment"),
 					COMPUTER_HARDWARE(TECHNOLOGY_HARDWARE_AND_EQUIPMENT, "Computer Hardware"),
