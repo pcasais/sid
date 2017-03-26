@@ -46,4 +46,22 @@ public enum UnathourizedResultType {
 		}
 		return match;
 	}
+	
+	/**
+     * Returns the UnathourizedResultType given its description
+     *
+     * @param description
+     *            the description
+     * @return the UnathourizedResultType that has this description or null if none
+     */
+    public static UnathourizedResultType getByDescription(String description){
+        UnathourizedResultType match = null;
+        for(UnathourizedResultType type: UnathourizedResultType.values()){
+            if(type.getDescription().equalsIgnoreCase(description)){
+                match = type;
+                break;
+            }
+        }
+        return match;
+    }
 }

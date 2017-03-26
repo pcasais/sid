@@ -15,6 +15,7 @@ public enum Sector {
 		ASSOCIATIONS(ROOT, "Associations"),
 		    CHARITY(ASSOCIATIONS, "Charity"),
 		    CHURCHES(ASSOCIATIONS, "Churches"),
+		    MEDICAL_ASSOCIATIONS(ASSOCIATIONS, "Medical Associations"),
 		    MUSIC_BANDS(ASSOCIATIONS, "Music Bands"),
 		    SPORT_CLUBS(ASSOCIATIONS, "Sport Clubs"),
 		    TERRORISTS_AND_REBEL_FORCES(ASSOCIATIONS, "Terrorists and rebel forces"),
@@ -86,6 +87,7 @@ public enum Sector {
 						HOME_IMPROVEMENT_RETAILERS(GENERAL_RETAILERS, "Home Improvement Retailers"),
 						SPECIALIZED_CONSUMER_SERVICES(GENERAL_RETAILERS, "Specialized Consumer Services"),
 						SPECIALTY_RETAILERS(GENERAL_RETAILERS, "Specialty Retailers"),
+				SECURITY_SERVICES(CONSUMER_SERVICES, "Security Services"),
 				TRAVEL_AND_LEISURE(CONSUMER_SERVICES, "Travel & Leisure"),
 					AIRLINES(TRAVEL_AND_LEISURE, "Airlines"),
 					GAMBLING(TRAVEL_AND_LEISURE, "Gambling"),
@@ -132,7 +134,7 @@ public enum Sector {
 						AEROSPACE(AEROSPACE_AND_DEFENSE, "Aerospace"),
 						DEFENSE(AEROSPACE_AND_DEFENSE, "Defense"),
 					ELECTRONIC_AND_ELECTRICAL_EQUIPMENT(INDUSTRIAL_GOODS_AND_SERVICES, "Electronic & Electrical Equipment"),
-						ELECTRICAL_COMPONENTS(ELECTRONIC_AND_ELECTRICAL_EQUIPMENT, "Electrical Components &"),
+						ELECTRICAL_COMPONENTS(ELECTRONIC_AND_ELECTRICAL_EQUIPMENT, "Electrical Components"),
 						ELECTRONIC_EQUIPMENT(ELECTRONIC_AND_ELECTRICAL_EQUIPMENT, "Electronic Equipment"),
 					GENERAL_INDUSTRIALS(INDUSTRIAL_GOODS_AND_SERVICES, "General Industrials"),
 						CONTAINERS_AND_PACKAGING(GENERAL_INDUSTRIALS, "Containers & Packaging"),
@@ -161,6 +163,8 @@ public enum Sector {
 					OIL_EQUIPMENT_AND_SERVICES(OIL_EQUIPMENT_SERVICES_AND_DISTRIBUTION, "Oil Equipment & Services"),
 					PIPELINES(OIL_EQUIPMENT_SERVICES_AND_DISTRIBUTION, "Pipelines"),
 			OTHER_SERVICES(INDUSTRY, "Other Services"),
+			    CONSULTING_SERVICES(OTHER_SERVICES, "Consulting Services"),
+			    FUNERAL_SERVICES(OTHER_SERVICES, "Funeral Services"),
 			    LEGAL_SERVICES(OTHER_SERVICES, "Legal Services"),
 	            STAFFING_AND_RECRUITING(OTHER_SERVICES, "Staffing and Recruiting"),
 	            SPECIALTY_TRAINING(OTHER_SERVICES, "Specialty training"),
@@ -241,7 +245,7 @@ public enum Sector {
 				MONITORING_INFRASTRUCTURE(INFRASTUCTURE, "Monitoring infrastructure"),
 					EARTH_OBSERVATION_SATELLITES(MONITORING_INFRASTRUCTURE, "Earth observation satellites"),
 					GLOBAL_POSIOTINING_SYSTEM(MONITORING_INFRASTRUCTURE, "Global positioning system"),
-					METEOROLOGICAL_NETWORKS(MONITORING_INFRASTRUCTURE, "Meteorolical networks"),
+					METEOROLOGICAL_NETWORKS(MONITORING_INFRASTRUCTURE, "Meteorological networks"),
 					SISMIC_NETWORKS(MONITORING_INFRASTRUCTURE, "Sismic networks"),
 					TIDAL_MONITORING(MONITORING_INFRASTRUCTURE, "Tidal monitoring"),
 				SOLID_WASTE_MANAGEMENT(INFRASTUCTURE, "Solid waste management"),
@@ -306,18 +310,39 @@ public enum Sector {
 	//@formatter:on
     
     private final Sector parent;
-    private final String description;
+    private final String name;
     
-    private Sector(Sector parent, String description) {
+    /**
+     * The constructor just requires the parent sector and its name
+     * @param parent The parent sector
+     * @param name The name of the sector
+     */
+    private Sector(Sector parent, String name) {
         this.parent = parent;
-        this.description = description;
+        this.name = name;
     }
     
-    public String getDescription() {
-        return description;
+    public String getName() {
+        return name;
     }
     
     public Sector getParent() {
         return parent;
+    }
+    
+    /**
+     * Returns the sector with the matching name
+     * @param name The name of the sector which is being searched
+     * @return The matching sector or null if none matches
+     */
+    public static Sector getByName(String name){
+        Sector matching = null;
+        for(Sector sector: Sector.values()){
+            if(sector.getName().equalsIgnoreCase(name)){
+                matching = sector;
+                break;
+            }
+        }
+        return matching;
     }
 }

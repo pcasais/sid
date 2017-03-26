@@ -1,10 +1,6 @@
 package com.damosais.sid.parsers;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,14 +10,12 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.damosais.sid.database.beans.CountryVariableValue;
 import com.damosais.sid.database.beans.SocioeconomicVariable;
+import com.damosais.sid.webapp.windows.ImportSocioeconomicDataWindow;
 import com.neovisionaries.i18n.CountryCode;
 
 /**
@@ -31,194 +25,98 @@ import com.neovisionaries.i18n.CountryCode;
  * @version 1.0
  * @since 1.0
  */
-public class ExcelSocioEconomicDataReader {
+public class ExcelSocioEconomicDataReader extends ExcelReader {
     private static final Logger LOGGER = Logger.getLogger(ExcelSocioEconomicDataReader.class);
-    private XSSFWorkbook workbook;
-
-    /**
-     * Returns the name of the sheets
-     *
-     * @param file
-     *            The file we are reading
-     * @throws IOException
-     *             If there is a problem reading the file
-     * @return the name of the sheets
-     */
-    public List<String> getSheetNames(File file) throws IOException {
-        try {
-            workbook = new XSSFWorkbook(file);
-            final List<String> sheetNames = new ArrayList<>();
-            for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                sheetNames.add(workbook.getSheetName(i));
-            }
-            return sheetNames;
-        } catch (final InvalidFormatException e) {
-            throw new IOException("Invalid format exception when reading file", e);
-        }
-    }
+    private static final String THE_OBJECT_IN_ROW = "The object in row ";
     
     /**
      * This method process a row of data from the file
      *
      * @param rowNumber
      *            The row number being parsed
-     * @param variablesMapping
-     *            The map with the column names and the socioeconomic variables
-     * @param countryColumn
-     *            The column that contains the country code
-     * @param dateColumn
-     *            The column that contains the date
+     * @param row
+     *            The row we are processing
      * @param columnMap
-     *            The map with the column numbers and names
-     * @param rowIterator
-     *            The iterator for the rows
-     * @param justYear
-     *            The format to parse dates that just have the year
-     * @param yearAndMonth
-     *            The format to parse dates that have year and month
-     * @param fullDate
-     *            The format to parse dates that are defined fully
+     *            The mapping of the
      * @return A list with the variables read from this row
      */
-    private List<CountryVariableValue> processDataRow(int rowNumber, Map<String, SocioeconomicVariable> variablesMapping, int countryColumn, int dateColumn, final Map<Integer, String> columnMap, final Iterator<Row> rowIterator, final DateFormat justYear, final DateFormat yearAndMonth, final DateFormat fullDate) {
+    private List<CountryVariableValue> processDataRow(int rowNumber, Row row, Map<Integer, String> columnMap) {
         final List<CountryVariableValue> values = new ArrayList<>();
-        final Iterator<Cell> cellIterator = rowIterator.next().cellIterator();
-        int columnNumber = 0;
-        String countryCode = null;
-        String dateValue = null;
-        final Map<SocioeconomicVariable, Double> rowValues = new HashMap<>();
-        // 1st) We loop through the columns reading the values
-        while (cellIterator.hasNext()) {
-            final Cell cell = cellIterator.next();
-            if (columnNumber == countryColumn) {
-                countryCode = readCellValue(cell);
-            } else if (columnNumber == dateColumn) {
-                dateValue = readCellValue(cell);
-            } else if (columnMap.containsKey(columnNumber) && variablesMapping.containsKey(columnMap.get(columnNumber))) {
-                final SocioeconomicVariable varible = variablesMapping.get(columnMap.get(columnNumber));
-                if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
-                    rowValues.put(varible, cell.getNumericCellValue());
-                }
-            }
-            columnNumber++;
+        // 1st) We get the content of the row
+        final Map<String, Object> rowContents = readRowContent(row, columnMap);
+
+        // 2nd) Now we get the country and date first
+        final Object countryRaw = rowContents.get(ImportSocioeconomicDataWindow.COUNTRY);
+        CountryCode country = null;
+        boolean error = false;
+        if (countryRaw == null || !(countryRaw instanceof String) || StringUtils.isBlank((String) countryRaw) || (country = CountryCode.getByCode((String) countryRaw, false)) == null) {
+            LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + " has an invalid country. Skipping variables");
+            error = true;
         }
-        // 2nd) We only process rows that have a value set for country and date
-        if (StringUtils.isNotBlank(countryCode) && StringUtils.isNotBlank(dateValue)) {
-            final CountryCode country = CountryCode.getByCode(countryCode, false);
-            Date date = null;
-            // 2.1) For the date we attempt three different parsings
+        final Object dateRaw = rowContents.get(ImportSocioeconomicDataWindow.DATE);
+        Date date = null;
+        if (dateRaw != null && dateRaw instanceof Date) {
+            date = (Date) dateRaw;
+        } else if (dateRaw != null && dateRaw instanceof String && StringUtils.isNotBlank((String) dateRaw)) {
+            // If the date is in string format then we try to parse it using three different date formats
             try {
-                date = fullDate.parse(dateValue);
+                date = fullDate.parse((String) dateRaw);
             } catch (final ParseException e) {
-                LOGGER.debug("The object in row " + rowNumber + " has a date that is not full format");
+                LOGGER.debug(THE_OBJECT_IN_ROW + rowNumber + " has a date that is not full format");
             }
             if (date == null) {
                 try {
-                    date = yearAndMonth.parse(dateValue);
+                    date = yearAndMonth.parse((String) dateRaw);
                 } catch (final ParseException e) {
-                    LOGGER.debug("The object in row " + rowNumber + " has a date that is not in year and month format");
+                    LOGGER.debug(THE_OBJECT_IN_ROW + rowNumber + " has a date that is not in year and month format");
                 }
             }
             if (date == null) {
                 try {
-                    date = justYear.parse(dateValue);
+                    date = justYear.parse((String) dateRaw);
                 } catch (final ParseException e) {
-                    LOGGER.debug("The object in row " + rowNumber + " has a date that is not in year format");
+                    LOGGER.debug(THE_OBJECT_IN_ROW + rowNumber + " has a date that is not in year format");
                 }
             }
-            // 3rd) We then check that the date and country are valid and has some data in it
-            if (country != null && date != null && !rowValues.isEmpty()) {
-                for (final SocioeconomicVariable variable : rowValues.keySet()) {
+            if (date == null) {
+                LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + " has a date that is not in one of the valid formats (" + FULL_DATE_FORMAT + ", " + YEAR_AND_MONTH_FORMAT + " or " + YEAR_FORMAT + "). Skipping variables");
+                error = true;
+            }
+        } else {
+            LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + " has an invalid date. Skipping variables");
+            error = true;
+        }
+
+        // Now is time to start creating the variables
+        if (!error) {
+            for (final String variableName : rowContents.keySet()) {
+                // Fist we check that the variable and its value are defined
+                final SocioeconomicVariable variable = SocioeconomicVariable.getByName(variableName);
+                final Object valueRaw = rowContents.get(variableName);
+                Double valueParsed = null;
+                if (variable != null && valueRaw instanceof Double) {
+                    valueParsed = (Double) valueRaw;
+                } else if (variable != null && valueRaw instanceof String) {
+                    try {
+                        valueParsed = Double.parseDouble((String) valueRaw);
+                    } catch (final NumberFormatException nfe) {
+                        LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + " has an invalid value for the variable " + variableName);
+                    }
+                } else if (variable != null) {
+                    LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + " has an invalid value for the variable " + variableName);
+                }
+                // If we managed to read both values then we create the object and add it to the list
+                if (variable != null && valueParsed != null) {
                     final CountryVariableValue value = new CountryVariableValue();
                     value.setCountry(country);
                     value.setDate(date);
                     value.setVariable(variable);
-                    value.setValue(rowValues.get(variable));
+                    value.setValue(valueParsed);
                     values.add(value);
                 }
-            } else {
-                LOGGER.debug("The object in row " + rowNumber + " doesn't have a valid country/date/data");
             }
         }
         return values;
-    }
-    
-    /**
-     * This method processes the header row and returns an array with the location of the country and date columns
-     *
-     * @param rowIterator
-     *            The iterator to loop through the rows
-     * @param columnMap
-     *            The map where to store all the columns
-     * @param countryColumnName
-     *            The name of the column containing the country code
-     * @param dateColumnName
-     *            The name of the column containing the date
-     * @return An array of size 2 being [countryCodeColumn, dateColumn] or -1 for any value not found
-     */
-    private int[] processHeaderRow(Iterator<Row> rowIterator, Map<Integer, String> columnMap, String countryColumnName, String dateColumnName) {
-        final int[] result = new int[2];
-        result[0] = -1;
-        result[1] = -1;
-        final Iterator<Cell> cellIterator = rowIterator.next().cellIterator();
-        int columnNumber = 0;
-        while (cellIterator.hasNext()) {
-            final String cellValue = readCellValue(cellIterator.next());
-            if (cellValue != null) {
-                if (countryColumnName.equalsIgnoreCase(cellValue)) {
-                    result[0] = columnNumber;
-                } else if (dateColumnName.equalsIgnoreCase(cellValue)) {
-                    result[1] = columnNumber;
-                } else {
-                    columnMap.put(columnNumber, cellValue);
-                }
-            }
-            columnNumber++;
-        }
-        return result;
-    }
-    
-    /**
-     * Reads the value of a cell
-     *
-     * @param cell
-     *            The cell to be checked
-     * @return The string value or null if it can't be read as a string
-     */
-    private String readCellValue(Cell cell) {
-        switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_STRING:
-                return cell.getStringCellValue();
-            case Cell.CELL_TYPE_BOOLEAN:
-                return Boolean.toString(cell.getBooleanCellValue());
-            case Cell.CELL_TYPE_NUMERIC:
-                return Double.toString(cell.getNumericCellValue());
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Reads the columns headers so the user can map them to their values
-     *
-     * @param sheetName
-     *            The name of the sheet
-     * @return A list with the column names
-     */
-    public List<String> readColumns(String sheetName) {
-        final List<String> columnNames = new ArrayList<>();
-        final XSSFSheet sheet = workbook.getSheet(sheetName);
-        final Iterator<Row> rowIterator = sheet.iterator();
-        if (rowIterator.hasNext()) {
-            final Iterator<Cell> cellIterator = rowIterator.next().cellIterator();
-            while (cellIterator.hasNext()) {
-                final String cellValue = readCellValue(cellIterator.next());
-                if (cellValue != null) {
-                    columnNames.add(cellValue);
-                }
-            }
-        }
-        return columnNames;
     }
     
     /**
@@ -226,34 +124,22 @@ public class ExcelSocioEconomicDataReader {
      *
      * @param sheetName
      *            The name of the sheet
-     * @param countryColumnName
-     *            The column from which we will read the country values
-     * @param dateColumnName
-     *            The column from which we will read the date
-     * @param variablesMapping
-     *            A map with the socioeconomic variables and the column where they are mapped
+     * @param mappingValues
+     *            A map with the socioeconomic variables and the column where they are mapped and the date and country column mappings
      * @return
      */
-    public List<CountryVariableValue> readValues(String sheetName, String countryColumnName, String dateColumnName, Map<String, SocioeconomicVariable> variablesMapping) {
+    public List<CountryVariableValue> readValues(String sheetName, Map<String, String> mappingValues) {
         final List<CountryVariableValue> values = new ArrayList<>();
         final XSSFSheet sheet = workbook.getSheet(sheetName);
-        int countryColumn = -1;
-        int dateColumn = -1;
         final Map<Integer, String> columnMap = new HashMap<>();
         final Iterator<Row> rowIterator = sheet.iterator();
         int rowNumber = 0;
-        final DateFormat justYear = new SimpleDateFormat("yyyy");
-        final DateFormat yearAndMonth = new SimpleDateFormat("yyyy-MM");
-        final DateFormat fullDate = new SimpleDateFormat("yyyy-MM-dd");
         while (rowIterator.hasNext()) {
             if (rowNumber == 0) {
                 // If is the header row then we map the position of every column name
-                final int[] headers = processHeaderRow(rowIterator, columnMap, countryColumnName, dateColumnName);
-                countryColumn = headers[0];
-                dateColumn = headers[1];
+                columnMap.putAll(processHeaderRow(rowIterator.next(), mappingValues));
             } else {
-                // In this case we are reading a row so we try to get every value that has been mapped
-                values.addAll(processDataRow(rowNumber, variablesMapping, countryColumn, dateColumn, columnMap, rowIterator, justYear, yearAndMonth, fullDate));
+                values.addAll(processDataRow(rowNumber, rowIterator.next(), columnMap));
             }
             rowNumber++;
         }

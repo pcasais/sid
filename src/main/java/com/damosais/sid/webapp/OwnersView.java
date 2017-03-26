@@ -198,7 +198,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         // Now we handle the containers
         ownersContainer = new BeanItemContainer<>(Owner.class);
         ownersContainer.addNestedContainerProperty(COUNTRY_NAME);
-        ownersContainer.addNestedContainerProperty("sector.description");
+        ownersContainer.addNestedContainerProperty("sector.name");
         ownersContainer.addNestedContainerProperty(CREATED_BY_NAME);
         ownersContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         ownersTable.setContainerDataSource(ownersContainer);
@@ -208,7 +208,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         targetsContainer.addNestedContainerProperty(UPDATED_BY_NAME);
         targetsTable.setContainerDataSource(targetsContainer);
         // Now we define which columns are visible and what are going to be their names in the table header
-        ownersTable.setVisibleColumns(new Object[] { "name", COUNTRY_NAME, "sector.description", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
+        ownersTable.setVisibleColumns(new Object[] { "name", COUNTRY_NAME, "sector.name", "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
         ownersTable.setColumnHeaders(new String[] { "Name", "Country", "Sector", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });
         targetsTable.setVisibleColumns(new Object[] { "siteName", "ips", COUNTRY_NAME, "created", CREATED_BY_NAME, "updated", UPDATED_BY_NAME, EDIT_BUTTON, DELETE_BUTTON });
         targetsTable.setColumnHeaders(new String[] { "Site name", "IPs", "country", "Created", "Created by", "Last update", "Last update by", "Edit", "Delete" });

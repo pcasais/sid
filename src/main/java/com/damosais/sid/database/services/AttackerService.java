@@ -20,7 +20,7 @@ import com.damosais.sid.database.dao.AttackerDAO;
 public class AttackerService {
     @Autowired
     private AttackerDAO attackerDao;
-    
+
     /**
      * Deletes an attacker from the database
      *
@@ -30,7 +30,7 @@ public class AttackerService {
     public void delete(Attacker attacker) {
         attackerDao.delete(attacker);
     }
-    
+
     /**
      * Returns the existing attackers in the database
      *
@@ -41,7 +41,7 @@ public class AttackerService {
         attackerDao.findAll().forEach(attackers::add);
         return attackers;
     }
-    
+
     /**
      * Saves an existing attacker to the database
      *

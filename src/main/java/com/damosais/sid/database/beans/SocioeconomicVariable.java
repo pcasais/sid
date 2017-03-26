@@ -87,4 +87,20 @@ public enum SocioeconomicVariable {
     public String toString() {
         return name;
     }
+    
+    /**
+     * This method returns the variable that matches the given name
+     * @param name The name of the variable
+     * @return The matching variable or null if none matches
+     */
+    public static SocioeconomicVariable getByName(String name){
+        SocioeconomicVariable matching = null;
+        for(SocioeconomicVariable variable: SocioeconomicVariable.values()){
+            if(variable.getName().equalsIgnoreCase(name)){
+                matching = variable;
+                break;
+            }
+        }
+        return matching;
+    }
 }

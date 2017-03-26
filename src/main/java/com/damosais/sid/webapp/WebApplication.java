@@ -3,6 +3,7 @@ package com.damosais.sid.webapp;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.damosais.sid.database.beans.User;
+import com.damosais.sid.webapp.windows.ImportEventDataWindow;
 import com.damosais.sid.webapp.windows.ImportSocioeconomicDataWindow;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Widgetset;
@@ -47,6 +48,9 @@ public class WebApplication extends UI {
     @Autowired
     private ImportSocioeconomicDataWindow importSocioeconomicDataWindow;
     
+    @Autowired
+    private ImportEventDataWindow importEventDataWindow;
+    
     /**
      * Adds the menu on the top so the users can change the view
      */
@@ -70,9 +74,7 @@ public class WebApplication extends UI {
             countries.addItem("Statistical data", selectedItem -> navigator.navigateTo(CountryStatisticsView.VIEW_NAME));
             menuBar.addItem("Users", selectedItem -> navigator.navigateTo(UsersView.VIEW_NAME));
             final MenuItem utilities = menuBar.addItem("Utilities", null);
-            utilities.addItem("Import Incidents", selectedItem -> {
-
-            });
+            utilities.addItem("Import Incidents", selectedItem -> getUI().addWindow(importEventDataWindow));
             utilities.addItem("Import Socioeconomic data", selectedItem -> getUI().addWindow(importSocioeconomicDataWindow));
 
             final Button logout = new Button("Logout", event -> {

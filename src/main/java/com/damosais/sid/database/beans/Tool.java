@@ -38,31 +38,56 @@ public class Tool {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private ToolType type;
-    
+
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
-    
+
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
-    
+
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-    
+
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Tool other = (Tool) obj;
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+        if (type != other.type) {
+            return false;
+        }
+        return true;
+    }
+
     public Date getCreated() {
         return created;
     }
-    
+
     public User getCreatedBy() {
         return createdBy;
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -70,7 +95,7 @@ public class Tool {
     public String getName() {
         return name;
     }
-
+    
     public ToolType getType() {
         return type;
     }
@@ -78,39 +103,48 @@ public class Tool {
     public Date getUpdated() {
         return updated;
     }
-    
+
     public User getUpdatedBy() {
         return updatedBy;
     }
-    
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (name == null ? 0 : name.hashCode());
+        result = prime * result + (type == null ? 0 : type.hashCode());
+        return result;
+    }
+
     public void setCreated(Date created) {
         this.created = created;
     }
-    
+
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public void setType(ToolType type) {
         this.type = type;
     }
-    
+
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
-    
+
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
-    
+
     @Override
     public String toString() {
         return name;

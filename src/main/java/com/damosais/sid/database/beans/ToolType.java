@@ -14,12 +14,12 @@ public enum ToolType {
 	DATA_TAP			(5, "Data tap", "A device that provides access to data as it flows through a network or system.");
 	
 	private final int code;
-	private final String representation;
+	private final String name;
 	private final String description;
 
-	private ToolType(int code, String representation, String description) {
+	private ToolType(int code, String name, String description) {
 		this.code = code;
-		this.representation = representation;
+		this.name = name;
 		this.description = description;
 	}
 
@@ -27,8 +27,8 @@ public enum ToolType {
 		return code;
 	}
 	
-	public String getRepresentation(){
-	    return representation;
+	public String getName(){
+	    return name;
 	}
 
 	public String getDescription() {
@@ -53,8 +53,26 @@ public enum ToolType {
 		return match;
 	}
 	
+	/**
+     * Returns the ToolType given its character representation
+     *
+     * @param name
+     *            the name of the type
+     * @return the ToolType that has this name or null if none
+     */
+    public static ToolType getByName(String name){
+        ToolType match = null;
+        for(ToolType type: ToolType.values()){
+            if(type.getName().equalsIgnoreCase(name)){
+                match = type;
+                break;
+            }
+        }
+        return match;
+    }
+	
 	@Override
 	public String toString(){
-	    return representation;
+	    return name;
 	}
 }

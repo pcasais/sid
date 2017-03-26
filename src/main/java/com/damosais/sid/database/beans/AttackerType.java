@@ -12,7 +12,8 @@ public enum AttackerType {
 	VANDALS     (3, "Vandals"),
 	CRIMINALS	(4, "Criminals"),
 	STATE		(5, "State"),	
-	OTHER		(6, "Other"),;
+	OTHER		(6, "Other"),
+	UNKNOWN     (7, "Unknown");
 		
 	private final int code;
 	private final String description;
@@ -45,6 +46,22 @@ public enum AttackerType {
 		}
 		return match;
 	}
+	
+	/**
+     * Returns the AttackerType by its description
+     * @param description The description
+     * @return The AttackerType that has that description or null if none
+     */
+    public static AttackerType getByDescription(String description){
+        AttackerType match = null;
+        for(AttackerType type: AttackerType.values()){
+            if(type.getDescription().equalsIgnoreCase(description)){
+                match = type;
+                break;
+            }
+        }
+        return match;
+    }
 	
 	@Override
 	public String toString(){
