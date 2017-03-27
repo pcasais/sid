@@ -8,8 +8,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -23,7 +25,6 @@ import com.damosais.sid.database.beans.Incident;
 import com.damosais.sid.database.beans.Owner;
 import com.damosais.sid.database.beans.Target;
 import com.damosais.sid.database.beans.Tool;
-import com.damosais.sid.database.beans.UnauthorizedResult;
 import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.services.AttackService;
 import com.damosais.sid.database.services.AttackerService;
@@ -100,34 +101,34 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
     private File tempFile;
     private String fileName;
     private FileMappings fileMappings;
-
+    
     @Autowired
     private FileMappigsService fileMappingsService;
-
+    
     @Autowired
     private OwnerService ownerService;
-    
+
     @Autowired
     private TargetService targetService;
-    
+
     @Autowired
     private ToolService toolService;
-    
+
     @Autowired
     private UnauthorizedResultService unauthorizedResultService;
-    
+
     @Autowired
     private EventService eventService;
-
+    
     @Autowired
     private AttackService attackService;
-
+    
     @Autowired
     private IncidentService incidentService;
-
+    
     @Autowired
     private AttackerService attackerService;
-    
+
     /**
      * The constructor creates a window with all the fields
      */
@@ -140,7 +141,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         content.setSizeUndefined();
         content.setSpacing(true);
         content.setMargin(true);
-
+        
         // 2nd) We add the uploader to select the file
         fileUpload = new Upload(null, this);
         fileUpload.addFailedListener(this);
@@ -148,7 +149,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         fileUpload.setButtonCaption("Upload excel file");
         fileUpload.setImmediate(true);
         content.addComponent(fileUpload);
-        
+
         // 3nd) We add the sheet selector
         sheetsField = new ComboBox("Sheet", new ArrayList<String>());
         sheetsField.setNullSelectionAllowed(false);
@@ -175,10 +176,10 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             }
         });
         content.addComponent(sheetsField);
-        
+
         // 4th) We then add the rest of the column mappers
         createMappingGrid(new ArrayList<>());
-
+        
         // 5th) We then add the import button and set the content
         importButton = new Button("Import", this);
         importButton.setStyleName("link");
@@ -186,7 +187,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         content.addComponent(importButton);
         setContent(content);
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         // First we read the selected mappings
@@ -209,6 +210,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         mappingValues.put((String) columnMappings.get(PEAK_TRAFFIC_FIELD).getValue(), PEAK_TRAFFIC_FIELD);
         mappingValues.put((String) columnMappings.get(ECONOMIC_IMPACT_FIELD).getValue(), ECONOMIC_IMPACT_FIELD);
         mappingValues.put((String) columnMappings.get(TOOL_NAME_FIELD).getValue(), TOOL_NAME_FIELD);
+        mappingValues.put((String) columnMappings.get(TOOL_TYPE_FIELD).getValue(), TOOL_TYPE_FIELD);
         mappingValues.put((String) columnMappings.get(VULNERABILITY_NAME_FIELD).getValue(), VULNERABILITY_NAME_FIELD);
         mappingValues.put((String) columnMappings.get(VULNERABILITY_TYPE_FIELD).getValue(), VULNERABILITY_TYPE_FIELD);
         mappingValues.put((String) columnMappings.get(VULNERABILITY_NOTES_FIELD).getValue(), VULNERABILITY_NOTES_FIELD);
@@ -261,7 +263,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             }
         }
     }
-
+    
     private void closeTempWriter() {
         if (tempBuffer != null) {
             try {
@@ -273,7 +275,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             }
         }
     }
-    
+
     private void createMappingGrid(List<String> columns) {
         // 1st) We create the layout with three columns
         final HorizontalLayout mappers = new HorizontalLayout();
@@ -291,7 +293,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         incidentLayout.setSpacing(true);
         mappers.addComponent(incidentLayout);
         content.addComponent(mappers);
-        
+
         // 2nd) First we add the mappers for the event detail
         columnMappings = new HashMap<>();
         generateField(columns, DATE_FIELD, eventLayout);
@@ -302,7 +304,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         generateField(columns, SITE_NAME_FIELD, eventLayout);
         generateField(columns, IPS_FIELD, eventLayout);
         generateField(columns, SITE_COUNTRY_FIELD, eventLayout);
-        
+
         // 3rd) We then add on top the attack details
         generateField(columns, UNAUTHORISED_TYPE_FIELD, attackLayout);
         generateField(columns, ADMIN_ACCESS_FIELD, attackLayout);
@@ -318,7 +320,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         generateField(columns, VULNERABILITY_TYPE_FIELD, attackLayout);
         generateField(columns, VULNERABILITY_NOTES_FIELD, attackLayout);
         generateField(columns, VULNERABILITY_CVE_FIELD, attackLayout);
-        
+
         // 4th) We finally add the incident details
         generateField(columns, INCIDENT_NAME_FIELD, incidentLayout);
         generateField(columns, ATTACKER_NAME_FIELD, incidentLayout);
@@ -326,7 +328,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         generateField(columns, ATTACKER_TYPE_FIELD, incidentLayout);
         generateField(columns, MOTIVATION_FIELD, incidentLayout);
     }
-    
+
     /**
      * This method adds a field to the given layout
      *
@@ -342,7 +344,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         columnMappings.put(fieldName, fieldMapping);
         layout.addComponent(fieldMapping);
     }
-
+    
     @Override
     public OutputStream receiveUpload(String filename, String mimeType) {
         try {
@@ -355,63 +357,81 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         }
         return tempBuffer;
     }
-    
+
     private void saveEvent(com.damosais.sid.database.beans.Event event, List<Owner> owners, List<Target> targets, List<Tool> tools, List<Incident> incidents, List<Attacker> attackers, User user) {
         // 1st) We try to save the inner components of the event
-        final Owner owner = event.getTarget().getOwner();
-        if (!owners.contains(owner)) {
-            owner.setCreated(new Date());
-            owner.setCreatedBy(user);
-            ownerService.save(event.getTarget().getOwner());
-        }
-        final Target target = event.getTarget();
-        if (!targets.contains(target)) {
-            target.setCreated(new Date());
-            target.setCreatedBy(user);
-            targetService.save(target);
-        }
-        // 2nd) We then save the inner components of the attack
-        final Attack attack = event.getAttack();
-        final Tool tool = attack.getTool();
-        if (tool != null && !tools.contains(tool)) {
-            tool.setCreated(new Date());
-            tool.setCreatedBy(user);
-            toolService.save(tool);
-        }
-        if (attack.getUnauthorizedResults() != null && !attack.getUnauthorizedResults().isEmpty()) {
-            for (final UnauthorizedResult result : attack.getUnauthorizedResults()) {
-                result.setCreated(new Date());
-                result.setCreatedBy(user);
-                unauthorizedResultService.save(result);
+        try {
+            final Owner owner = event.getTarget().getOwner();
+            if (!owners.contains(owner)) {
+                owner.setCreated(new Date());
+                owner.setCreatedBy(user);
+                ownerService.save(event.getTarget().getOwner());
+                owners.add(owner);
             }
-        }
-        
-        // 3rd) And then we do the same with the ones of the incident
-        final Incident incident = attack.getIncident();
-        if (incident.getAttackers() != null && !incident.getAttackers().isEmpty()) {
-            for (final Attacker attacker : incident.getAttackers()) {
-                if (!attackers.contains(attacker)) {
-                    attacker.setCreated(new Date());
-                    attacker.setCreatedBy(user);
-                    attackerService.save(attacker);
-                }
+            final Target target = event.getTarget();
+            if (!targets.contains(target)) {
+                target.setCreated(new Date());
+                target.setCreatedBy(user);
+                targetService.save(target);
+                targets.add(target);
+            } else {
+                event.setTarget(targets.get(targets.indexOf(target)));
             }
-        }
+            // 2nd) We then save the inner components of the attack
+            final Attack attack = event.getAttack();
+            final Tool tool = attack.getTool();
+            if (tool != null && !tools.contains(tool)) {
+                tool.setCreated(new Date());
+                tool.setCreatedBy(user);
+                toolService.save(tool);
+                tools.add(tool);
+            } else if (tool != null && tools.contains(tool)) {
+                attack.setTool(tools.get(tools.indexOf(tool)));
+            }
+            if (attack.getUnauthorizedResults() != null) {
+                attack.getUnauthorizedResults().setCreated(new Date());
+                attack.getUnauthorizedResults().setCreatedBy(user);
+                unauthorizedResultService.save(attack.getUnauthorizedResults());
+            }
 
-        // 4th) Now we save the event, attack and incident itself
-        if (!incidents.contains(incident)) {
-            incident.setCreated(new Date());
-            incident.setCreatedBy(user);
-            incidentService.save(incident);
+            // 3rd) And then we do the same with the ones of the incident
+            final Incident incident = attack.getIncident();
+            if (incident.getAttackers() != null && !incident.getAttackers().isEmpty()) {
+                final Set<Attacker> withIds = new HashSet<>();
+                for (final Attacker attacker : incident.getAttackers()) {
+                    if (!attackers.contains(attacker)) {
+                        attacker.setCreated(new Date());
+                        attacker.setCreatedBy(user);
+                        attackerService.save(attacker);
+                        attackers.add(attacker);
+                        withIds.add(attacker);
+                    } else {
+                        withIds.add(attackers.get(attackers.indexOf(attacker)));
+                    }
+                }
+                incident.setAttackers(withIds);
+            }
+            
+            // 4th) Now we save the event, attack and incident itself
+            if (StringUtils.isBlank(incident.getName()) || !incidents.contains(incident)) {
+                incident.setCreated(new Date());
+                incident.setCreatedBy(user);
+                incidentService.save(incident);
+                incidents.add(incident);
+            } else if (incidents.contains(incident)) {
+                attack.setIncident(incidents.get(incidents.indexOf(incident)));
+            }
+            attack.setCreated(new Date());
+            attack.setCreatedBy(user);
+            attackService.save(attack);
+            event.setCreated(new Date());
+            event.setCreatedBy(user);
+            eventService.save(event);
+        } catch (final Exception e) {
+            LOGGER.error("Problem saving data: " + e.getMessage(), e);
         }
-        attack.setCreated(new Date());
-        attack.setCreatedBy(user);
-        attackService.save(attack);
-        event.setCreated(new Date());
-        event.setCreatedBy(user);
-        eventService.save(event);
     }
-    
+
     @Override
     public void uploadFailed(FailedEvent event) {
         closeTempWriter();
@@ -420,7 +440,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         }
         new Notification(FAILURE, "Error uploading file: " + event.getReason().getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
     }
-
+    
     @Override
     public void uploadSucceeded(SucceededEvent event) {
         closeTempWriter();
