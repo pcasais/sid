@@ -308,41 +308,64 @@ public enum Sector {
 					LEAGES_AND_ASSOCIATIONS(SPORTS_INFRASTRUCTURE, "Leagues & associations"),
 					SPORTS_FACILITIES(SPORTS_INFRASTRUCTURE, "Sports facilities");
 	//@formatter:on
-    
-    private final Sector parent;
-    private final String name;
-    
-    /**
-     * The constructor just requires the parent sector and its name
-     * @param parent The parent sector
-     * @param name The name of the sector
-     */
-    private Sector(Sector parent, String name) {
-        this.parent = parent;
-        this.name = name;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public Sector getParent() {
-        return parent;
-    }
-    
+
     /**
      * Returns the sector with the matching name
-     * @param name The name of the sector which is being searched
+     * 
+     * @param name
+     *            The name of the sector which is being searched
      * @return The matching sector or null if none matches
      */
-    public static Sector getByName(String name){
+    public static Sector getByName(String name) {
         Sector matching = null;
-        for(Sector sector: Sector.values()){
-            if(sector.getName().equalsIgnoreCase(name)){
+        for (final Sector sector : Sector.values()) {
+            if (sector.getName().equalsIgnoreCase(name)) {
                 matching = sector;
                 break;
             }
         }
         return matching;
+    }
+    
+    private final Sector parent;
+
+    private final String name;
+
+    /**
+     * The constructor just requires the parent sector and its name
+     * 
+     * @param parent
+     *            The parent sector
+     * @param name
+     *            The name of the sector
+     */
+    private Sector(Sector parent, String name) {
+        this.parent = parent;
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Sector getParent() {
+        return parent;
+    }
+
+    /**
+     * This method returns if a sector is son of a given sector
+     * 
+     * @param sector
+     *            The sector for which we are checking the paternity
+     * @return true if the sector is parent (root is parent of root), false otherwise
+     */
+    public boolean isChildOf(Sector sector) {
+        if (sector.getParent() != null && sector.getParent() == sector) {
+            return true;
+        } else if (sector.getParent() == null) {
+            return sector == ROOT;
+        } else {
+            return sector.getParent().isChildOf(sector);
+        }
     }
 }

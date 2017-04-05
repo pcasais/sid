@@ -55,4 +55,19 @@ public interface CountryVariableValueDAO extends CrudRepository<CountryVariableV
      * @return A list of the different country values
      */
     public List<CountryVariableValue> findByVariableAndDate(SocioeconomicVariable variable, Date date);
+
+    /**
+     * Returns the socioeconomic variable values for a given country between two given dates
+     *
+     * @param variable
+     *            The socioeconomic variable
+     * @param startDate
+     *            The start date of the period
+     * @param endDate
+     *            The end date of the period
+     * @param country
+     *            The country for which we are retrieving the data
+     * @return A list of the different country variable values
+     */
+    public List<CountryVariableValue> findByVariableAndDateBetweenAndCountry(SocioeconomicVariable variable, Date startDate, Date endDate, CountryCode country);
 }

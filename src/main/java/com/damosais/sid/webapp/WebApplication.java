@@ -71,7 +71,9 @@ public class WebApplication extends UI {
             parties.addItem("Attackers", selectedItem -> navigator.navigateTo(AttackersView.VIEW_NAME));
             parties.addItem("Victims", selectedItem -> navigator.navigateTo(OwnersView.VIEW_NAME));
             final MenuItem countries = menuBar.addItem("Country Information", null);
-            countries.addItem("Statistical data", selectedItem -> navigator.navigateTo(CountryStatisticsView.VIEW_NAME));
+            countries.addItem("Conflicts", selectedItem -> navigator.navigateTo(ConflictsView.VIEW_NAME));
+            countries.addItem("Socioeconomic data", selectedItem -> navigator.navigateTo(CountryStatisticsView.VIEW_NAME));
+            menuBar.addItem("Statistic analysis", selectedItem -> navigator.navigateTo(CorrelationsView.VIEW_NAME));
             menuBar.addItem("Users", selectedItem -> navigator.navigateTo(UsersView.VIEW_NAME));
             final MenuItem utilities = menuBar.addItem("Utilities", null);
             utilities.addItem("Import Incidents", selectedItem -> getUI().addWindow(importEventDataWindow));

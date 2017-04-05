@@ -26,7 +26,8 @@ public class GraphicResources {
     public static final FileResource UPLOAD_ICON = new FileResource(new File(IMG_PATH + "upload.png"));
     public static final FileResource RUN_ICON = new FileResource(new File(IMG_PATH + "run.png"));
     public static final FileResource EXCEL_ICON = new FileResource(new File(IMG_PATH + "excel.png"));
-    
+    public static final FileResource INFO_ICON = new FileResource(new File(IMG_PATH + "info.png"));
+
     private GraphicResources() {
     }
 }
