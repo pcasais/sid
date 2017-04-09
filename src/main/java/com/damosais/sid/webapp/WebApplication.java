@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.damosais.sid.database.beans.User;
 import com.damosais.sid.webapp.windows.ImportEventDataWindow;
 import com.damosais.sid.webapp.windows.ImportSocioeconomicDataWindow;
+import com.vaadin.annotations.Push;
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.Widgetset;
 import com.vaadin.navigator.Navigator;
@@ -33,6 +34,7 @@ import com.vaadin.ui.VerticalLayout;
 @SpringUI
 @Theme("sidtheme")
 @Widgetset("AppWidgetset")
+@Push
 public class WebApplication extends UI {
     private static final long serialVersionUID = -8605579931378861984L;
     // The user is used to validate actions
@@ -41,16 +43,16 @@ public class WebApplication extends UI {
     private VerticalLayout root;
     private Navigator navigator;
     private HorizontalLayout bar;
-    
-    @Autowired
-    private SpringViewProvider viewProvider;
 
     @Autowired
-    private ImportSocioeconomicDataWindow importSocioeconomicDataWindow;
+    private SpringViewProvider viewProvider;
     
     @Autowired
+    private ImportSocioeconomicDataWindow importSocioeconomicDataWindow;
+
+    @Autowired
     private ImportEventDataWindow importEventDataWindow;
-    
+
     /**
      * Adds the menu on the top so the users can change the view
      */
@@ -58,7 +60,7 @@ public class WebApplication extends UI {
         if (bar == null) {
             bar = new HorizontalLayout();
             bar.setWidth("100%");
-
+            
             final MenuBar menuBar = new MenuBar();
             menuBar.setWidth(100.0f, Unit.PERCENTAGE);
             menuBar.addItem("Events", selectedItem -> navigator.navigateTo(EventsView.VIEW_NAME));
@@ -78,13 +80,13 @@ public class WebApplication extends UI {
             final MenuItem utilities = menuBar.addItem("Utilities", null);
             utilities.addItem("Import Incidents", selectedItem -> getUI().addWindow(importEventDataWindow));
             utilities.addItem("Import Socioeconomic data", selectedItem -> getUI().addWindow(importSocioeconomicDataWindow));
-
+            
             final Button logout = new Button("Logout", event -> {
                 user = null;
                 removeNavigationMenu();
                 navigator.navigateTo(LoginScreen.VIEW_NAME);
             });
-            
+
             bar.addComponent(menuBar);
             bar.addComponent(logout);
             bar.setExpandRatio(menuBar, 1);
@@ -92,37 +94,37 @@ public class WebApplication extends UI {
         }
         root.addComponentAsFirst(bar);
     }
-
+    
     public User getUser() {
         return user;
     }
-    
+
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         setSizeFull();
         getPage().setTitle("Security Incident Database");
-
+        
         root = new VerticalLayout();
         root.setSizeFull();
         root.setMargin(true);
         root.setSpacing(true);
         setContent(root);
-
+        
         final Panel viewContainer = new Panel();
         viewContainer.setSizeFull();
         root.addComponent(viewContainer);
         root.setComponentAlignment(viewContainer, Alignment.MIDDLE_CENTER);
         root.setExpandRatio(viewContainer, 1.0f);
-
+        
         navigator = new Navigator(this, viewContainer);
         navigator.addViewChangeListener(new ViewChangeListener() {
             private static final long serialVersionUID = 3813804949308061211L;
-            
+
             @Override
             public void afterViewChange(ViewChangeEvent event) {
                 // Nothing to do for control
             }
-
+            
             @Override
             public boolean beforeViewChange(ViewChangeEvent event) {
                 if (!(event.getNewView() instanceof LoginScreen) && user == null) {
@@ -131,20 +133,20 @@ public class WebApplication extends UI {
                 }
                 return true;
             }
-            
+
         });
         navigator.addProvider(viewProvider);
         setNavigator(navigator);
         navigator.navigateTo(LoginScreen.VIEW_NAME);
     }
-
+    
     /**
      * Removes the menu after the logout
      */
     public void removeNavigationMenu() {
         root.removeComponent(bar);
     }
-
+    
     public void setUser(User user) {
         this.user = user;
     }

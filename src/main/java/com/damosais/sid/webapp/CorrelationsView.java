@@ -11,8 +11,9 @@ import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.CorrelationHypothesisService;
 import com.damosais.sid.webapp.customfields.YearMonthDate;
+import com.damosais.sid.webapp.windows.CorrelationHypothesisWindow;
 import com.damosais.sid.webapp.windows.CorrelationResultsWindow;
-import com.damosais.sid.webapp.windows.CorrelationWindow;
+import com.damosais.sid.webapp.windows.CorrelationSearchWindow;
 import com.vaadin.data.util.BeanItem;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.navigator.View;
@@ -45,17 +46,21 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
     private static final String DELETE_BUTTON = "deleteButton";
     private BeanItemContainer<CorrelationHypothesis> container;
     private Button addCorrelation;
+    private Button findCorrelations;
     private FilterTable table;
-    
+
     @Autowired
     private CorrelationHypothesisService correlationService;
-
-    @Autowired
-    private CorrelationWindow correlationWindow;
     
     @Autowired
-    private CorrelationResultsWindow correlationResultsWindow;
+    private CorrelationHypothesisWindow correlationWindow;
 
+    @Autowired
+    private CorrelationResultsWindow correlationResultsWindow;
+    
+    @Autowired
+    private CorrelationSearchWindow correlationSearchWindow;
+    
     /**
      * The constructor just enables the spacing and margins on the layout
      */
@@ -63,7 +68,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         setSpacing(true);
         setMargin(true);
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -71,6 +76,9 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         if (addCorrelation.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
             correlationWindow.setAddMode(this);
             getUI().addWindow(correlationWindow);
+        } else if (findCorrelations.equals(button) && user.getRole() == UserRole.EDIT_DATA) {
+            correlationSearchWindow.generateForm(this);
+            getUI().addWindow(correlationSearchWindow);
         } else {
             // In this case we are dealing with the buttons of a row
             final CorrelationHypothesis correlationToAlter = (CorrelationHypothesis) button.getData();
@@ -89,7 +97,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
             }
         }
     }
-    
+
     private void createButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addCorrelation = new Button("Add correlation", this);
@@ -97,15 +105,20 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         addCorrelation.setIcon(GraphicResources.ADD_ICON);
         hl.addComponent(addCorrelation);
         hl.setComponentAlignment(addCorrelation, Alignment.MIDDLE_CENTER);
+        findCorrelations = new Button("Find correlations automatically", this);
+        findCorrelations.setStyleName("link");
+        findCorrelations.setIcon(GraphicResources.SEARCH_ICON);
+        hl.addComponent(findCorrelations);
+        hl.setComponentAlignment(findCorrelations, Alignment.MIDDLE_CENTER);
         addComponent(hl);
         setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-
+    
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -129,7 +142,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         // Finally we return the button
         return button;
     }
-
+    
     @Override
     public String getStyle(CustomTable source, Object itemId, Object propertyId) {
         final CorrelationHypothesis hypothesis = (CorrelationHypothesis) itemId;
@@ -146,7 +159,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
             }
             if (Math.abs(maxCorrelationCoefficient) > 0.75d && pValue < 0.05d) {
                 return "green";
-            } else if (Math.abs(maxCorrelationCoefficient) > 0.75) {
+            } else if (Math.abs(maxCorrelationCoefficient) > 0.5) {
                 return "orange";
             } else {
                 return "red";
@@ -154,7 +167,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         }
         return null;
     }
-    
+
     /**
      * When we start the ConflictsView we create the table and the buttons
      */
@@ -168,7 +181,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         addComponent(table);
         setComponentAlignment(table, Alignment.TOP_CENTER);
     }
-
+    
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
@@ -176,6 +189,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         // We create a table and set the source of data as the container
         table = new FilterTable();
         table.setFilterBarVisible(true);
+        table.setSortEnabled(true);
         // We add the columns to edit the correlation, see the details, run it and delete it
         table.addGeneratedColumn(EDIT_BUTTON, this);
         table.addGeneratedColumn(DETAILS_BUTTON, this);
@@ -187,8 +201,8 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "startDate", "endDate", "sector", "targetCountries", "sourceCountries", "variables", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DETAILS_BUTTON, RUN_BUTTON, DELETE_BUTTON });
-        table.setColumnHeaders(new String[] { "Start", "End", "Sector", "Target Countries", "Source Countries", "Variables", "Created", "Created by", "Last update", "Last updated by", "Edit", "Details", "Run", "Delete" });
+        table.setVisibleColumns(new Object[] { "startDate", "endDate", "bestCorrelation", "sector", "targetCountries", "sourceCountries", "variables", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DETAILS_BUTTON, RUN_BUTTON, DELETE_BUTTON });
+        table.setColumnHeaders(new String[] { "Start", "End", "Best Corr. Factor", "Sector", "Target Countries", "Source Countries", "Variables", "Created", "Created by", "Last update", "Last updated by", "Edit", "Details", "Run", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         table.setCellStyleGenerator(this);
@@ -198,7 +212,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         // Now we refresh the content
         refreshTableContent();
     }
-
+    
     /**
      * It refreshes the content of the table
      */

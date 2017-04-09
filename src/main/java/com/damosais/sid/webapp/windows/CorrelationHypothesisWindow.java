@@ -36,7 +36,7 @@ import com.vaadin.ui.Window;
  * @since 1.0
  */
 @Component
-public class CorrelationWindow extends Window {
+public class CorrelationHypothesisWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(ConflictWindow.class);
     private static final long serialVersionUID = -849902087781592670L;
     private final VerticalLayout content;
@@ -47,7 +47,7 @@ public class CorrelationWindow extends Window {
     /**
      * Creates a new window to add or edit correlations
      */
-    public CorrelationWindow() {
+    public CorrelationHypothesisWindow() {
         setModal(true);
         setSizeUndefined();
         content = new VerticalLayout();
