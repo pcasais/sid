@@ -13,6 +13,7 @@ import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.AttackService;
 import com.damosais.sid.database.services.EventService;
+import com.damosais.sid.webapp.customfields.YearMonthDayDate;
 import com.damosais.sid.webapp.windows.AddEventToAttackWindow;
 import com.damosais.sid.webapp.windows.AttackWindow;
 import com.vaadin.data.util.BeanItem;
@@ -53,19 +54,19 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
     private Button addEvent;
     private FilterTable attacksTable;
     private FilterTable eventsTable;
-    
+
     @Autowired
     private AttackService attackService;
-    
+
     @Autowired
     private EventService eventService;
-
+    
     @Autowired
     private AttackWindow attackWindow;
-
+    
     @Autowired
     private AddEventToAttackWindow addEventWindow;
-
+    
     /**
      * The constructor just sets the spacing and the margin
      */
@@ -73,7 +74,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         setSpacing(true);
         setMargin(true);
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -115,7 +116,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
             }
         }
     }
-
+    
     private void createButtons() {
         addAttack = new Button("Add attak", this);
         addAttack.setStyleName("link");
@@ -124,12 +125,12 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         addEvent.setStyleName("link");
         addEvent.setIcon(GraphicResources.ADD_ICON);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-
+    
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
         // First we create a button and set its data with the Computer
@@ -152,7 +153,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -169,7 +170,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         setComponentAlignment(addAttack, Alignment.TOP_CENTER);
         addComponent(attacksTable);
         setComponentAlignment(attacksTable, Alignment.TOP_CENTER);
-        
+
         final Label eventsLabel = new Label("<center><p>In the <b>Events</b> you can review the existing events and its definitions.<br/>Once you have selected an attack in the above table you will be able to assign and remove events that belong to it in the table below.</p></center>", ContentMode.HTML);
         addComponent(eventsLabel);
         addComponent(addEvent);
@@ -177,7 +178,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         addComponent(eventsTable);
         setComponentAlignment(eventsTable, Alignment.MIDDLE_CENTER);
     }
-
+    
     private void initializeTables() {
         // We create the tables
         attacksTable = new FilterTable();
@@ -208,6 +209,10 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         attacksTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         attacksTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         eventsTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
+        // We now make the dates in the tables to show the dates in format year, month and day
+        attacksTable.setConverter("start", new YearMonthDayDate());
+        attacksTable.setConverter("end", new YearMonthDayDate());
+        eventsTable.setConverter("date", new YearMonthDayDate());
         // Finally we add the selectable behaviour to the attacks table to link both tables
         attacksTable.setSelectable(true);
         attacksTable.setMultiSelect(false);
@@ -218,7 +223,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         refreshAttacksTableContent();
         refreshEventsTableContent(null);
     }
-    
+
     /**
      * Refreshes the table with the attacks data
      */
@@ -227,7 +232,7 @@ public class AttacksView extends VerticalLayout implements View, ColumnGenerator
         attacksContainer.removeAllItems();
         attacksContainer.addAll(attackService.list());
     }
-    
+
     /**
      * Refreshes the table with the events data
      *

@@ -17,6 +17,7 @@ public enum Sector {
 		    CHURCHES(ASSOCIATIONS, "Churches"),
 		    MEDICAL_ASSOCIATIONS(ASSOCIATIONS, "Medical Associations"),
 		    MUSIC_BANDS(ASSOCIATIONS, "Music Bands"),
+		    POLITICAL_PARTIES(ASSOCIATIONS, "Political Parties"),
 		    SPORT_CLUBS(ASSOCIATIONS, "Sport Clubs"),
 		    TERRORISTS_AND_REBEL_FORCES(ASSOCIATIONS, "Terrorists and rebel forces"),
 		    THINK_TANKS_AND_LOBBIES(ASSOCIATIONS, "Think tanks and lobbies"),
@@ -308,10 +309,10 @@ public enum Sector {
 					LEAGES_AND_ASSOCIATIONS(SPORTS_INFRASTRUCTURE, "Leagues & associations"),
 					SPORTS_FACILITIES(SPORTS_INFRASTRUCTURE, "Sports facilities");
 	//@formatter:on
-
+    
     /**
      * Returns the sector with the matching name
-     * 
+     *
      * @param name
      *            The name of the sector which is being searched
      * @return The matching sector or null if none matches
@@ -326,14 +327,14 @@ public enum Sector {
         }
         return matching;
     }
-    
+
     private final Sector parent;
-
+    
     private final String name;
-
+    
     /**
      * The constructor just requires the parent sector and its name
-     * 
+     *
      * @param parent
      *            The parent sector
      * @param name
@@ -343,29 +344,33 @@ public enum Sector {
         this.parent = parent;
         this.name = name;
     }
-
+    
     public String getName() {
         return name;
     }
-
+    
     public Sector getParent() {
         return parent;
     }
-
+    
     /**
      * This method returns if a sector is son of a given sector
-     * 
+     *
      * @param sector
      *            The sector for which we are checking the paternity
      * @return true if the sector is parent (root is parent of root), false otherwise
      */
     public boolean isChildOf(Sector sector) {
-        if (sector.getParent() != null && sector.getParent() == sector) {
+        // 1st) We check if the sector is ROOT
+        if (ROOT == sector) {
             return true;
-        } else if (sector.getParent() == null) {
-            return sector == ROOT;
         } else {
-            return sector.getParent().isChildOf(sector);
+            // 2nd) Otherwise we check if this sector is the given sector
+            if (this == sector) {
+                return true;
+            } else {
+                return getParent() == null ? false : getParent().isChildOf(sector);
+            }
         }
     }
 }

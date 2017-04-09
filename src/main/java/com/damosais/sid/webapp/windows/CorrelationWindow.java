@@ -6,11 +6,11 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.damosais.sid.database.beans.Correlation;
+import com.damosais.sid.database.beans.CorrelationHypothesis;
 import com.damosais.sid.database.beans.SocioeconomicVariable;
 import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.beans.UserRole;
-import com.damosais.sid.database.services.CorrelationService;
+import com.damosais.sid.database.services.CorrelationHypothesisService;
 import com.damosais.sid.webapp.CorrelationsView;
 import com.damosais.sid.webapp.GraphicResources;
 import com.damosais.sid.webapp.WebApplication;
@@ -40,10 +40,10 @@ public class CorrelationWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(ConflictWindow.class);
     private static final long serialVersionUID = -849902087781592670L;
     private final VerticalLayout content;
-
-    @Autowired
-    private CorrelationService correlationService;
     
+    @Autowired
+    private CorrelationHypothesisService correlationService;
+
     /**
      * Creates a new window to add or edit correlations
      */
@@ -55,8 +55,9 @@ public class CorrelationWindow extends Window {
         content.setSpacing(true);
         content.setMargin(true);
         setContent(content);
+        center();
     }
-
+    
     /**
      * Creates the form to add or edit correlations
      *
@@ -67,13 +68,13 @@ public class CorrelationWindow extends Window {
      * @param newItem
      *            indicates if we are creating or editing
      */
-    private void createCorrelationForm(Correlation correlation, CorrelationsView correlationsView, boolean newItem) {
+    private void createCorrelationForm(CorrelationHypothesis correlation, CorrelationsView correlationsView, boolean newItem) {
         // 1st) We create the form and assign the binder
         final FormLayout form = new FormLayout();
-        final BeanFieldGroup<Correlation> binder = new BeanFieldGroup<>(Correlation.class);
+        final BeanFieldGroup<CorrelationHypothesis> binder = new BeanFieldGroup<>(CorrelationHypothesis.class);
         binder.setItemDataSource(correlation);
         binder.setBuffered(true);
-        
+
         // 2nd) We add the fields that are only one selection
         final DateField startField = binder.buildAndBind("Start", "startDate", DateField.class);
         startField.addValidator(new NullValidator("An start date is required", false));
@@ -88,7 +89,7 @@ public class CorrelationWindow extends Window {
         sectorField.addValidator(new NullValidator("You need to select a sector", false));
         binder.bind(sectorField, "sector");
         form.addComponent(sectorField);
-
+        
         // 3rd) Now we add the fields that allow multiple selections
         final CountrySelector targetCountries = new CountrySelector("Target Countries", false);
         binder.bind(targetCountries, "targetCountries");
@@ -100,11 +101,11 @@ public class CorrelationWindow extends Window {
         socioEconomicVariables.setMultiSelect(true);
         binder.bind(socioEconomicVariables, "variables");
         form.addComponent(socioEconomicVariables);
-        
+
         // 4th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
-
+        
         // 5th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) correlationsView.getUI()).getUser();
         if (user.getRole() == UserRole.EDIT_DATA) {
@@ -130,8 +131,8 @@ public class CorrelationWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
-    private void saveCorrelation(Correlation correlation, boolean newItem, User user) {
+    
+    private void saveCorrelation(CorrelationHypothesis correlation, boolean newItem, User user) {
         if (newItem) {
             correlation.setCreatedBy(user);
         } else {
@@ -139,7 +140,7 @@ public class CorrelationWindow extends Window {
         }
         correlationService.save(correlation);
     }
-
+    
     /**
      * Prepares the window to add a new correlation
      *
@@ -148,9 +149,9 @@ public class CorrelationWindow extends Window {
      */
     public void setAddMode(CorrelationsView correlationsView) {
         setCaption("Adding new correlation");
-        createCorrelationForm(new Correlation(), correlationsView, true);
+        createCorrelationForm(new CorrelationHypothesis(), correlationsView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing correlation
      *
@@ -159,9 +160,9 @@ public class CorrelationWindow extends Window {
      * @param correlationsView
      *            the view that called
      */
-    public void setEditMode(Correlation correlationToAlter, CorrelationsView correlationsView) {
+    public void setEditMode(CorrelationHypothesis correlationToAlter, CorrelationsView correlationsView) {
         setCaption("Editing correlation");
         createCorrelationForm(correlationToAlter, correlationsView, false);
     }
-    
+
 }

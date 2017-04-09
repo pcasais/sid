@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -62,6 +63,9 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
+
+    @Transient
+    private int rowNumber;
 
     @Override
     public boolean equals(Object obj) {
@@ -119,6 +123,10 @@ public class Event {
         return id;
     }
 
+    public int getRowNumber() {
+        return rowNumber;
+    }
+
     public Target getTarget() {
         return target;
     }
@@ -126,7 +134,7 @@ public class Event {
     public Date getUpdated() {
         return updated;
     }
-    
+
     public User getUpdatedBy() {
         return updatedBy;
     }
@@ -163,6 +171,10 @@ public class Event {
     
     public void setId(Long id) {
         this.id = id;
+    }
+    
+    public void setRowNumber(int rowNumber) {
+        this.rowNumber = rowNumber;
     }
     
     public void setTarget(Target target) {

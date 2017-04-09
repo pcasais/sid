@@ -36,51 +36,50 @@ public class Attack {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Long id;
-
+    
     @ManyToOne
-    @JoinColumn(name = "toolId", nullable = false)
+    @JoinColumn(name = "toolId")
     private Tool tool;
-
+    
     @ManyToOne
-    @JoinColumn(name = "vulnerabilityId", nullable = false)
+    @JoinColumn(name = "vulnerabilityId")
     private Vulnerability vulnerability;
-
+    
     @OneToMany(mappedBy = "attack", fetch = FetchType.EAGER)
     @OrderBy("date asc")
     private Set<Event> events;
-    
+
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "attackId")
     private UnauthorizedResult unauthorizedResults;
-    
+
     @ManyToOne
     @JoinColumn(name = "incidentId")
     private Incident incident;
-    
+
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
-    
+
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
-    
+
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-    
+
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
-    
+
     public Date getCreated() {
         return created;
     }
-    
+
     public User getCreatedBy() {
         return createdBy;
     }
-
+    
     public Date getEnd() {
         Date maxDate = null;
         if (events != null && !events.isEmpty()) {
@@ -88,19 +87,19 @@ public class Attack {
         }
         return maxDate;
     }
-
+    
     public Set<Event> getEvents() {
         return events;
     }
-
+    
     public Long getId() {
         return id;
     }
-    
+
     public Incident getIncident() {
         return incident;
     }
-    
+
     public Date getStart() {
         Date minDate = null;
         if (events != null && !events.isEmpty()) {
@@ -108,65 +107,65 @@ public class Attack {
         }
         return minDate;
     }
-    
+
     public Tool getTool() {
         return tool;
     }
-
+    
     public UnauthorizedResult getUnauthorizedResults() {
         return unauthorizedResults;
     }
-
+    
     public Date getUpdated() {
         return updated;
     }
-
+    
     public User getUpdatedBy() {
         return updatedBy;
     }
-
+    
     public Vulnerability getVulnerability() {
         return vulnerability;
     }
-
+    
     public void setCreated(Date created) {
         this.created = created;
     }
-
+    
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
-
+    
     public void setEvents(Set<Event> events) {
         this.events = events;
     }
-
+    
     public void setId(Long id) {
         this.id = id;
     }
-
+    
     public void setIncident(Incident incident) {
         this.incident = incident;
     }
-
+    
     public void setTool(Tool tool) {
         this.tool = tool;
     }
-
+    
     public void setUnauthorizedResults(UnauthorizedResult unauthorizedResults) {
         this.unauthorizedResults = unauthorizedResults;
     }
-
+    
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
-
+    
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
-
+    
     public void setVulnerability(Vulnerability vulnerability) {
         this.vulnerability = vulnerability;
     }
-
+    
 }

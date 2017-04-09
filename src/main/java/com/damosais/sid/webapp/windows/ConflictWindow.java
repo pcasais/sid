@@ -36,10 +36,10 @@ public class ConflictWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(ConflictWindow.class);
     private static final long serialVersionUID = 564490309079766L;
     private final VerticalLayout content;
-
+    
     @Autowired
     private ConflictService conflictService;
-    
+
     /**
      * Creates a new window to add or edit conflicts
      */
@@ -51,8 +51,9 @@ public class ConflictWindow extends Window {
         content.setSpacing(true);
         content.setMargin(true);
         setContent(content);
+        center();
     }
-
+    
     /**
      * Creates the form to add or edit conflicts
      *
@@ -69,7 +70,7 @@ public class ConflictWindow extends Window {
         final BeanFieldGroup<Conflict> binder = new BeanFieldGroup<>(Conflict.class);
         binder.setItemDataSource(conflict);
         binder.setBuffered(true);
-        
+
         // 2nd) We add the fields that are only one selection
         final DateField startField = binder.buildAndBind("Start", "start", DateField.class);
         startField.setResolution(Resolution.DAY);
@@ -81,7 +82,7 @@ public class ConflictWindow extends Window {
         nameField.addValidator(new NullValidator("You need to provide a name", false));
         nameField.setNullRepresentation("");
         form.addComponent(nameField);
-        
+
         // 3rd) We now add the country (due to the lack of a toString() that shows proper content we need this hack)
         final CountrySelector location = new CountrySelector("Location", false);
         binder.bind(location, "location");
@@ -89,11 +90,11 @@ public class ConflictWindow extends Window {
         final CountrySelector partiesInvolved = new CountrySelector("Parties involved", false);
         binder.bind(partiesInvolved, "partiesInvolved");
         form.addComponent(partiesInvolved);
-        
+
         // 4th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
-
+        
         // 5th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) conflictsView.getUI()).getUser();
         if (user.getRole() == UserRole.EDIT_DATA) {
@@ -119,7 +120,7 @@ public class ConflictWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-
+    
     private void saveConflict(Conflict conflict, boolean newItem, User user) {
         if (newItem) {
             conflict.setCreatedBy(user);
@@ -128,7 +129,7 @@ public class ConflictWindow extends Window {
         }
         conflictService.save(conflict);
     }
-
+    
     /**
      * Prepares the window to add a new conflict
      *
@@ -139,7 +140,7 @@ public class ConflictWindow extends Window {
         setCaption("Adding new conflict");
         createConflictForm(new Conflict(), conflictsView, true);
     }
-    
+
     /**
      * Prepares the window to edit an existing conflict
      *

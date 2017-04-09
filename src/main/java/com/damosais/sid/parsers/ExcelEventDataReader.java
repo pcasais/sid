@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -62,14 +63,14 @@ public class ExcelEventDataReader extends ExcelReader {
         // 1st) We try to match the tool details
         final Object toolNameRaw = rowContents.get(ImportEventDataWindow.TOOL_NAME_FIELD);
         if (isObjectANonEmptyString(toolNameRaw)) {
-            Tool tool = toolsByName.get(toolNameRaw);
+            Tool tool = toolsByName.get(StringUtils.trim((String) toolNameRaw));
             if (tool == null) {
                 // 1.1) If the tool is not in the system we create it
                 tool = new Tool();
-                tool.setName((String) toolNameRaw);
+                tool.setName(StringUtils.trim((String) toolNameRaw));
                 final Object toolTypeRaw = rowContents.get(ImportEventDataWindow.TOOL_TYPE_FIELD);
                 if (isObjectANonEmptyString(toolTypeRaw)) {
-                    tool.setType(ToolType.getByName((String) toolTypeRaw));
+                    tool.setType(ToolType.getByName(StringUtils.trim((String) toolTypeRaw)));
                 }
                 if (tool.getType() == null) {
                     LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.TOOL_TYPE_FIELD);
@@ -89,7 +90,7 @@ public class ExcelEventDataReader extends ExcelReader {
         if (adminAccessRaw != null && adminAccessRaw instanceof Boolean) {
             result.setAdminAccess((Boolean) adminAccessRaw);
         } else if (isObjectANonEmptyString(adminAccessRaw)) {
-            result.setAdminAccess(TRUE.equalsIgnoreCase((String) adminAccessRaw));
+            result.setAdminAccess(TRUE.equalsIgnoreCase(StringUtils.trim((String) adminAccessRaw)));
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.ADMIN_ACCESS_FIELD);
         }
@@ -99,7 +100,7 @@ public class ExcelEventDataReader extends ExcelReader {
             result.setAverageTraffic((Double) averageTrafficRaw);
         } else if (isObjectANonEmptyString(averageTrafficRaw)) {
             try {
-                result.setAverageTraffic(Double.parseDouble((String) averageTrafficRaw));
+                result.setAverageTraffic(Double.parseDouble(StringUtils.trim((String) averageTrafficRaw)));
             } catch (final NumberFormatException e) {
                 LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.AVERAGE_TRAFFIC_FIELD, e);
             }
@@ -114,7 +115,7 @@ public class ExcelEventDataReader extends ExcelReader {
             result.setDownTime(((Double) downTimeRaw).longValue());
         } else if (isObjectANonEmptyString(downTimeRaw)) {
             try {
-                result.setDownTime(Long.parseLong((String) downTimeRaw));
+                result.setDownTime(Long.parseLong(StringUtils.trim((String) downTimeRaw)));
             } catch (final NumberFormatException e) {
                 LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.DOWNTIME_FIELD, e);
             }
@@ -127,7 +128,7 @@ public class ExcelEventDataReader extends ExcelReader {
             result.setEconomicImpact((Double) economicImpactRaw);
         } else if (isObjectANonEmptyString(economicImpactRaw)) {
             try {
-                result.setEconomicImpact(Double.parseDouble((String) economicImpactRaw));
+                result.setEconomicImpact(Double.parseDouble(StringUtils.trim((String) economicImpactRaw)));
             } catch (final NumberFormatException e) {
                 LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.ECONOMIC_IMPACT_FIELD, e);
             }
@@ -140,7 +141,7 @@ public class ExcelEventDataReader extends ExcelReader {
             result.setNumRegisters(((Double) numRegistersRaw).longValue());
         } else if (isObjectANonEmptyString(numRegistersRaw)) {
             try {
-                result.setNumRegisters(Long.parseLong((String) numRegistersRaw));
+                result.setNumRegisters(Long.parseLong(StringUtils.trim((String) numRegistersRaw)));
             } catch (final NumberFormatException e) {
                 LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.REGISTERS_FIELD, e);
             }
@@ -153,7 +154,7 @@ public class ExcelEventDataReader extends ExcelReader {
             result.setPeakTraffic((Double) peakTrafficRaw);
         } else if (isObjectANonEmptyString(peakTrafficRaw)) {
             try {
-                result.setPeakTraffic(Double.parseDouble((String) peakTrafficRaw));
+                result.setPeakTraffic(Double.parseDouble(StringUtils.trim((String) peakTrafficRaw)));
             } catch (final NumberFormatException e) {
                 LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.PEAK_TRAFFIC_FIELD, e);
             }
@@ -163,7 +164,7 @@ public class ExcelEventDataReader extends ExcelReader {
         // 2.7) We now parse the type of result of the attack
         final Object typeRaw = rowContents.get(ImportEventDataWindow.UNAUTHORISED_TYPE_FIELD);
         if (isObjectANonEmptyString(typeRaw)) {
-            result.setType(UnathourizedResultType.getByDescription((String) typeRaw));
+            result.setType(UnathourizedResultType.getByDescription(StringUtils.trim((String) typeRaw)));
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.UNAUTHORISED_TYPE_FIELD);
         }
@@ -172,7 +173,7 @@ public class ExcelEventDataReader extends ExcelReader {
         if (userAccessRaw != null && userAccessRaw instanceof Boolean) {
             result.setUserAccess((Boolean) userAccessRaw);
         } else if (isObjectANonEmptyString(userAccessRaw)) {
-            result.setUserAccess(TRUE.equalsIgnoreCase((String) userAccessRaw));
+            result.setUserAccess(TRUE.equalsIgnoreCase(StringUtils.trim((String) userAccessRaw)));
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.USER_ACCESS_FIELD);
         }
@@ -206,7 +207,7 @@ public class ExcelEventDataReader extends ExcelReader {
             event.setDate((Date) dateRaw);
         } else if (isObjectANonEmptyString(dateRaw)) {
             try {
-                event.setDate(fullDate.parse((String) dateRaw));
+                event.setDate(fullDate.parse(StringUtils.trim((String) dateRaw)));
             } catch (final ParseException e) {
                 LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.DATE_FIELD + ". The valid format is: " + FULL_DATE_FORMAT + SKIPPING_ROW, e);
                 error = true;
@@ -219,7 +220,7 @@ public class ExcelEventDataReader extends ExcelReader {
         // 2nd) We parse the action which is optional
         final Object actionRaw = rowContents.get(ImportEventDataWindow.ACTION_FIELD);
         if (isObjectANonEmptyString(actionRaw)) {
-            event.setAction(Action.getActionByRepresentation((String) actionRaw));
+            event.setAction(Action.getActionByRepresentation(StringUtils.trim((String) actionRaw)));
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.ACTION_FIELD);
         }
@@ -228,14 +229,14 @@ public class ExcelEventDataReader extends ExcelReader {
         final Object ownerNameRaw = rowContents.get(ImportEventDataWindow.OWNER_NAME_FIELD);
         Owner owner = null;
         if (isObjectANonEmptyString(ownerNameRaw)) {
-            owner = ownersByName.get(ownerNameRaw);
+            owner = ownersByName.get(StringUtils.trim((String) ownerNameRaw));
             if (owner == null) {
                 // 3.1) In this case the owner is new and we have to read the values where the name, country and sector are mandatory
                 owner = new Owner();
-                owner.setName((String) ownerNameRaw);
+                owner.setName(StringUtils.trim((String) ownerNameRaw));
                 final Object ownerCountryRaw = rowContents.get(ImportEventDataWindow.OWNER_COUNTRY_FIELD);
                 if (isObjectANonEmptyString(ownerCountryRaw)) {
-                    owner.setCountry(CountryCode.getByCode((String) ownerCountryRaw, false));
+                    owner.setCountry(CountryCode.getByCode(StringUtils.trim((String) ownerCountryRaw), false));
                 }
                 if (owner.getCountry() == null) {
                     LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.OWNER_COUNTRY_FIELD + SKIPPING_ROW);
@@ -243,7 +244,7 @@ public class ExcelEventDataReader extends ExcelReader {
                 }
                 final Object ownerSectorRaw = rowContents.get(ImportEventDataWindow.OWNER_SECTOR_FIELD);
                 if (isObjectANonEmptyString(ownerSectorRaw)) {
-                    owner.setSector(Sector.getByName((String) ownerSectorRaw));
+                    owner.setSector(Sector.getByName(StringUtils.trim((String) ownerSectorRaw)));
                 }
                 if (owner.getSector() == null) {
                     LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.OWNER_SECTOR_FIELD + SKIPPING_ROW);
@@ -262,11 +263,11 @@ public class ExcelEventDataReader extends ExcelReader {
         // 4th) We now parse the target of the event
         final Object targetSiteNameRaw = rowContents.get(ImportEventDataWindow.SITE_NAME_FIELD);
         if (isObjectANonEmptyString(targetSiteNameRaw)) {
-            Target target = targetsBySiteName.get(targetSiteNameRaw);
+            Target target = targetsBySiteName.get(StringUtils.trim((String) targetSiteNameRaw));
             if (target == null) {
                 // 4.1) In this case the target is new and we have to read the values where all are optional
                 target = new Target();
-                target.setSiteName((String) targetSiteNameRaw);
+                target.setSiteName(StringUtils.trim((String) targetSiteNameRaw));
                 target.setOwner(owner);
                 final Object targetIpsRaw = rowContents.get(ImportEventDataWindow.IPS_FIELD);
                 if (isObjectANonEmptyString(targetIpsRaw)) {
@@ -276,7 +277,7 @@ public class ExcelEventDataReader extends ExcelReader {
                 }
                 final Object targetCountryRaw = rowContents.get(ImportEventDataWindow.SITE_COUNTRY_FIELD);
                 if (isObjectANonEmptyString(targetCountryRaw)) {
-                    target.setCountry(CountryCode.getByCode((String) targetCountryRaw, false));
+                    target.setCountry(CountryCode.getByCode(StringUtils.trim((String) targetCountryRaw), false));
                 }
                 if (target.getCountry() == null) {
                     LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + " has no country assigned to the site.");
@@ -290,6 +291,7 @@ public class ExcelEventDataReader extends ExcelReader {
         
         // If we didn't had any fatal error then we returned the parsed object
         if (!error) {
+            event.setRowNumber(rowNumber);
             return event;
         } else {
             return null;
@@ -319,7 +321,7 @@ public class ExcelEventDataReader extends ExcelReader {
         
         // 2nd) If the incident hasn't been recorded then we create a new one
         incident = new Incident();
-        incident.setName((String) incidentNameRaw);
+        incident.setName(StringUtils.trim((String) incidentNameRaw));
         
         // 3rd) Now we try to map the motivation
         final Object motivationRaw = rowContents.get(ImportEventDataWindow.MOTIVATION_FIELD);
@@ -336,24 +338,24 @@ public class ExcelEventDataReader extends ExcelReader {
         final Object attackerTypeRaw = rowContents.get(ImportEventDataWindow.ATTACKER_TYPE_FIELD);
         AttackerType attackerType = null;
         if (isObjectANonEmptyString(attackerTypeRaw)) {
-            attackerType = AttackerType.getByDescription((String) attackerTypeRaw);
+            attackerType = AttackerType.getByDescription(StringUtils.trim((String) attackerTypeRaw));
         }
         // 4.2) We then get the country of the attackers
         final Object attackerCountryRaw = rowContents.get(ImportEventDataWindow.ATTACKER_COUNTRY_FIELD);
         CountryCode attackerCountry = null;
         if (isObjectANonEmptyString(attackerCountryRaw)) {
-            attackerCountry = CountryCode.getByCode((String) attackerCountryRaw, false);
+            attackerCountry = CountryCode.getByCode(StringUtils.trim((String) attackerCountryRaw), false);
         }
         
         // 4.3) Finally we read the names of the attackers and create the corresponding ones if needed
         final Object attackerNamesRaw = rowContents.get(ImportEventDataWindow.ATTACKER_NAME_FIELD);
         if (isObjectANonEmptyString(attackerNamesRaw)) {
             for (final String attackerName : ((String) attackerNamesRaw).split(ITEM_SEPARATOR)) {
-                Attacker attacker = attackersByName.get(attackerName);
+                Attacker attacker = attackersByName.get(StringUtils.trim(attackerName));
                 if (attacker == null) {
                     // If the attacker didn't exist we create it
                     attacker = new Attacker();
-                    attacker.setName(attackerName);
+                    attacker.setName(StringUtils.trim(attackerName));
                     attacker.setCountry(attackerCountry != null ? attackerCountry : CountryCode.UNDEFINED);
                     attacker.setType(attackerType != null ? attackerType : AttackerType.UNKNOWN);
                     attackersByName.put(attackerName, attacker);
@@ -394,7 +396,7 @@ public class ExcelEventDataReader extends ExcelReader {
         if (event != null) {
             event.getAttack().setIncident(parseIncidentFields(rowNumber, rowContents, incidentsByName, attackersByName));
         }
-
+        
         return event;
     }
     

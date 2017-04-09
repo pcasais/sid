@@ -101,34 +101,34 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
     private File tempFile;
     private String fileName;
     private FileMappings fileMappings;
-    
+
     @Autowired
     private FileMappigsService fileMappingsService;
-    
+
     @Autowired
     private OwnerService ownerService;
-
+    
     @Autowired
     private TargetService targetService;
-
+    
     @Autowired
     private ToolService toolService;
-
+    
     @Autowired
     private UnauthorizedResultService unauthorizedResultService;
-
+    
     @Autowired
     private EventService eventService;
-    
+
     @Autowired
     private AttackService attackService;
-    
+
     @Autowired
     private IncidentService incidentService;
-    
+
     @Autowired
     private AttackerService attackerService;
-
+    
     /**
      * The constructor creates a window with all the fields
      */
@@ -141,7 +141,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         content.setSizeUndefined();
         content.setSpacing(true);
         content.setMargin(true);
-        
+
         // 2nd) We add the uploader to select the file
         fileUpload = new Upload(null, this);
         fileUpload.addFailedListener(this);
@@ -149,7 +149,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         fileUpload.setButtonCaption("Upload excel file");
         fileUpload.setImmediate(true);
         content.addComponent(fileUpload);
-
+        
         // 3nd) We add the sheet selector
         sheetsField = new ComboBox("Sheet", new ArrayList<String>());
         sheetsField.setNullSelectionAllowed(false);
@@ -176,10 +176,10 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             }
         });
         content.addComponent(sheetsField);
-
+        
         // 4th) We then add the rest of the column mappers
         createMappingGrid(new ArrayList<>());
-        
+
         // 5th) We then add the import button and set the content
         importButton = new Button("Import", this);
         importButton.setStyleName("link");
@@ -187,7 +187,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         content.addComponent(importButton);
         setContent(content);
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         // First we read the selected mappings
@@ -253,17 +253,28 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             final List<com.damosais.sid.database.beans.Event> events = excelEventDataReader.readAndProcessValues(sheetName, mappingValues, owners, targets, tools, incidents, attackers, eventService.list());
             final User user = ((WebApplication) getUI()).getUser();
             if (!events.isEmpty()) {
+                final Map<Integer, String> errorsPerRow = new HashMap<>();
                 for (final com.damosais.sid.database.beans.Event newEvent : events) {
-                    saveEvent(newEvent, owners, targets, tools, incidents, attackers, user);
+                    final String error = saveEvent(newEvent, owners, targets, tools, incidents, attackers, user);
+                    if (StringUtils.isNotEmpty(error)) {
+                        errorsPerRow.put(newEvent.getRowNumber(), error);
+                    }
                 }
                 new Notification(SUCCESS, events.size() + " event" + (events.size() > 1 ? "s" : "") + " inserted in the system" + failedMappings, Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
+                if (!errorsPerRow.isEmpty()) {
+                    final StringBuilder errorString = new StringBuilder("Errors while importing data detected:\n");
+                    for (final int rowNumber : errorsPerRow.keySet()) {
+                        errorString.append("Row ").append(rowNumber).append(": ").append(errorsPerRow.get(rowNumber)).append("\n");
+                    }
+                    new Notification("Error", errorString.toString(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
+                }
                 getUI().removeWindow(this);
             } else {
                 new Notification(FAILURE, "No new events found in the file", Notification.Type.WARNING_MESSAGE).show(getUI().getPage());
             }
         }
     }
-    
+
     private void closeTempWriter() {
         if (tempBuffer != null) {
             try {
@@ -275,7 +286,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             }
         }
     }
-
+    
     private void createMappingGrid(List<String> columns) {
         // 1st) We create the layout with three columns
         final HorizontalLayout mappers = new HorizontalLayout();
@@ -293,7 +304,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         incidentLayout.setSpacing(true);
         mappers.addComponent(incidentLayout);
         content.addComponent(mappers);
-
+        
         // 2nd) First we add the mappers for the event detail
         columnMappings = new HashMap<>();
         generateField(columns, DATE_FIELD, eventLayout);
@@ -304,7 +315,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         generateField(columns, SITE_NAME_FIELD, eventLayout);
         generateField(columns, IPS_FIELD, eventLayout);
         generateField(columns, SITE_COUNTRY_FIELD, eventLayout);
-
+        
         // 3rd) We then add on top the attack details
         generateField(columns, UNAUTHORISED_TYPE_FIELD, attackLayout);
         generateField(columns, ADMIN_ACCESS_FIELD, attackLayout);
@@ -320,7 +331,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         generateField(columns, VULNERABILITY_TYPE_FIELD, attackLayout);
         generateField(columns, VULNERABILITY_NOTES_FIELD, attackLayout);
         generateField(columns, VULNERABILITY_CVE_FIELD, attackLayout);
-
+        
         // 4th) We finally add the incident details
         generateField(columns, INCIDENT_NAME_FIELD, incidentLayout);
         generateField(columns, ATTACKER_NAME_FIELD, incidentLayout);
@@ -328,7 +339,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         generateField(columns, ATTACKER_TYPE_FIELD, incidentLayout);
         generateField(columns, MOTIVATION_FIELD, incidentLayout);
     }
-
+    
     /**
      * This method adds a field to the given layout
      *
@@ -344,7 +355,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         columnMappings.put(fieldName, fieldMapping);
         layout.addComponent(fieldMapping);
     }
-    
+
     @Override
     public OutputStream receiveUpload(String filename, String mimeType) {
         try {
@@ -357,8 +368,8 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         }
         return tempBuffer;
     }
-
-    private void saveEvent(com.damosais.sid.database.beans.Event event, List<Owner> owners, List<Target> targets, List<Tool> tools, List<Incident> incidents, List<Attacker> attackers, User user) {
+    
+    private String saveEvent(com.damosais.sid.database.beans.Event event, List<Owner> owners, List<Target> targets, List<Tool> tools, List<Incident> incidents, List<Attacker> attackers, User user) {
         // 1st) We try to save the inner components of the event
         try {
             final Owner owner = event.getTarget().getOwner();
@@ -393,7 +404,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
                 attack.getUnauthorizedResults().setCreatedBy(user);
                 unauthorizedResultService.save(attack.getUnauthorizedResults());
             }
-
+            
             // 3rd) And then we do the same with the ones of the incident
             final Incident incident = attack.getIncident();
             if (incident.getAttackers() != null && !incident.getAttackers().isEmpty()) {
@@ -411,7 +422,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
                 }
                 incident.setAttackers(withIds);
             }
-            
+
             // 4th) Now we save the event, attack and incident itself
             if (StringUtils.isBlank(incident.getName()) || !incidents.contains(incident)) {
                 incident.setCreated(new Date());
@@ -427,11 +438,29 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
             event.setCreated(new Date());
             event.setCreatedBy(user);
             eventService.save(event);
+            return null;
         } catch (final Exception e) {
             LOGGER.error("Problem saving data: " + e.getMessage(), e);
+            try {
+                incidentService.delete(event.getAttack().getIncident());
+            } catch (final Exception e1) {
+                LOGGER.warn("Problem deleting incomplete incident:" + e1.getMessage(), e1);
+            }
+            try {
+                attackService.delete(event.getAttack());
+            } catch (final Exception e1) {
+                LOGGER.warn("Problem deleting incomplete attact:" + e1.getMessage(), e1);
+            }
+            try {
+                eventService.delete(event);
+            } catch (final Exception e1) {
+                LOGGER.warn("Problem deleting incomplete event:" + e1.getMessage(), e1);
+            }
+            // In this case we try to delete the created elements
+            return e.getMessage();
         }
     }
-
+    
     @Override
     public void uploadFailed(FailedEvent event) {
         closeTempWriter();
@@ -440,7 +469,7 @@ public class ImportEventDataWindow extends Window implements Receiver, Upload.Fa
         }
         new Notification(FAILURE, "Error uploading file: " + event.getReason().getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
     }
-    
+
     @Override
     public void uploadSucceeded(SucceededEvent event) {
         closeTempWriter();

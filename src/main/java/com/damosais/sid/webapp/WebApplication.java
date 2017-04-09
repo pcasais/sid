@@ -31,7 +31,7 @@ import com.vaadin.ui.VerticalLayout;
  * @since 1.0
  */
 @SpringUI
-@Theme("valo")
+@Theme("sidtheme")
 @Widgetset("AppWidgetset")
 public class WebApplication extends UI {
     private static final long serialVersionUID = -8605579931378861984L;

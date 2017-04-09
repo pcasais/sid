@@ -4,15 +4,12 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -20,34 +17,35 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.neovisionaries.i18n.CountryCode;
 
 /**
- * This class represents the value of a variable we are studying for a country
+ * This class represents a correlation hyphotesis we want to test
  *
  * @author Pablo Casais Solano
  * @version 1.0
  * @since 1.0
  */
 @Entity
-@Table(name = "CountryVariableValues", uniqueConstraints = @UniqueConstraint(columnNames = { "variable", "country", "date" }))
-public class CountryVariableValue {
+@Table(name = "CorrelationResults")
+public class CorrelationResult {
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
     private Long id;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "variable", nullable = false)
-    private SocioeconomicVariable variable;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "country", nullable = false)
     private CountryCode country;
 
-    @Column(name = "date", nullable = false)
-    private Date date;
+    @Column(name = "variable", nullable = false)
+    private SocioeconomicVariable variable;
 
-    @Column(name = "value", nullable = false)
-    private Double value;
-    
+    @Column(name = "correlationCoefficient", nullable = false)
+    private double correlationCoefficient;
+
+    @Column(name = "pValue", nullable = false)
+    private double pValue;
+
+    @Column(name = "interpolated", nullable = false)
+    private boolean interpolatedData;
+
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
@@ -59,10 +57,14 @@ public class CountryVariableValue {
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-
+    
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
+    
+    public double getCorrelationCoefficient() {
+        return correlationCoefficient;
+    }
 
     public CountryCode getCountry() {
         return country;
@@ -76,12 +78,12 @@ public class CountryVariableValue {
         return createdBy;
     }
 
-    public Date getDate() {
-        return date;
-    }
-
     public Long getId() {
         return id;
+    }
+    
+    public double getpValue() {
+        return pValue;
     }
 
     public Date getUpdated() {
@@ -92,12 +94,16 @@ public class CountryVariableValue {
         return updatedBy;
     }
 
-    public Double getValue() {
-        return value;
-    }
-
     public SocioeconomicVariable getVariable() {
         return variable;
+    }
+
+    public boolean isInterpolatedData() {
+        return interpolatedData;
+    }
+
+    public void setCorrelationCoefficient(double correlationCoefficient) {
+        this.correlationCoefficient = correlationCoefficient;
     }
 
     public void setCountry(CountryCode country) {
@@ -112,12 +118,16 @@ public class CountryVariableValue {
         this.createdBy = createdBy;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public void setInterpolatedData(boolean interpolatedData) {
+        this.interpolatedData = interpolatedData;
+    }
+
+    public void setpValue(double pValue) {
+        this.pValue = pValue;
     }
 
     public void setUpdated(Date updated) {
@@ -128,16 +138,7 @@ public class CountryVariableValue {
         this.updatedBy = updatedBy;
     }
 
-    public void setValue(Double value) {
-        this.value = value;
-    }
-
     public void setVariable(SocioeconomicVariable variable) {
         this.variable = variable;
-    }
-
-    @Override
-    public String toString() {
-        return "CountryVariableValue [variable=" + variable + ", country=" + country + ", date=" + date + ", value=" + value + "]";
     }
 }
