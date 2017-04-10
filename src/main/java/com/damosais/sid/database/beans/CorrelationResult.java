@@ -42,14 +42,17 @@ public class CorrelationResult {
 
     @Column(name = "pValue", nullable = false)
     private double pValue;
+    
+    @Column(name = "standardError", nullable = false)
+    private double standardError;
 
     @Column(name = "interpolated", nullable = false)
     private boolean interpolatedData;
-
+    
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
-
+    
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
@@ -57,15 +60,15 @@ public class CorrelationResult {
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-    
+
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
-    
+
     public double getCorrelationCoefficient() {
         return correlationCoefficient;
     }
-
+    
     public CountryCode getCountry() {
         return country;
     }
@@ -77,15 +80,19 @@ public class CorrelationResult {
     public User getCreatedBy() {
         return createdBy;
     }
-
+    
     public Long getId() {
         return id;
     }
-    
+
     public double getpValue() {
         return pValue;
     }
 
+    public double getStandardError() {
+        return standardError;
+    }
+    
     public Date getUpdated() {
         return updated;
     }
@@ -128,6 +135,10 @@ public class CorrelationResult {
 
     public void setpValue(double pValue) {
         this.pValue = pValue;
+    }
+
+    public void setStandardError(double standardError) {
+        this.standardError = standardError;
     }
 
     public void setUpdated(Date updated) {

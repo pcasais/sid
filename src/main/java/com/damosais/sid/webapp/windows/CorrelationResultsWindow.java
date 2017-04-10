@@ -27,7 +27,7 @@ import com.vaadin.ui.Window;
 public class CorrelationResultsWindow extends Window implements CellStyleGenerator {
     private static final long serialVersionUID = 7026874411087199862L;
     private final VerticalLayout content;
-    
+
     public CorrelationResultsWindow() {
         setModal(true);
         setSizeUndefined();
@@ -38,7 +38,7 @@ public class CorrelationResultsWindow extends Window implements CellStyleGenerat
         setContent(content);
         center();
     }
-    
+
     public void addValues(CorrelationHypothesis correlationHypothesis) {
         content.removeAllComponents();
         final DateFormat yearMonth = new SimpleDateFormat("yyyy-MMM");
@@ -54,13 +54,13 @@ public class CorrelationResultsWindow extends Window implements CellStyleGenerat
         container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "country", "variable", "correlationCoefficient", "pValue", "interpolatedData", "created", "createdBy.name", "updated", "updatedBy.name" });
-        table.setColumnHeaders(new String[] { "Country", "Variable", "Correlation Coeficient", "P-Value", "Data Interpolated", "Created", "Created by", "Last update", "Last updated by" });
+        table.setVisibleColumns(new Object[] { "country", "variable", "correlationCoefficient", "pValue", "standardError", "interpolatedData", "created", "createdBy.name", "updated", "updatedBy.name" });
+        table.setColumnHeaders(new String[] { "Country", "Variable", "Correlation Coeficient", "P-Value", "Standard Error", "Data Interpolated", "Created", "Created by", "Last update", "Last updated by" });
         container.addAll(correlationHypothesis.getResults());
         table.setCellStyleGenerator(this);
         content.addComponent(table);
     }
-    
+
     @Override
     public String getStyle(CustomTable source, Object itemId, Object propertyId) {
         final CorrelationResult result = (CorrelationResult) itemId;

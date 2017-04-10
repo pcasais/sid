@@ -127,11 +127,15 @@ public class CorrelationHypothesisService {
                     final PearsonsCorrelation pearsonCorrelation = new PearsonsCorrelation(matrix);
                     result.setCorrelationCoefficient(pearsonCorrelation.getCorrelationMatrix().getEntry(0, 1));
                     result.setpValue(pearsonCorrelation.getCorrelationPValues().getEntry(0, 1));
+                    result.setStandardError(pearsonCorrelation.getCorrelationStandardErrors().getEntry(0, 1));
                     if (Double.isNaN(result.getCorrelationCoefficient())) {
                         result.setCorrelationCoefficient(0d);
                     }
                     if (Double.isNaN(result.getpValue())) {
                         result.setpValue(1.0d);
+                    }
+                    if (Double.isNaN(result.getStandardError())) {
+                        result.setStandardError(1.0d);
                     }
                 } catch (final MathIllegalArgumentException e) {
                     errors.add("Problem with the correlation calculation for variable " + variable.getName() + " on " + country.getName() + ": interpolation of data for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1));
