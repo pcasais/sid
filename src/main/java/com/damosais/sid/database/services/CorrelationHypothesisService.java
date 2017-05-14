@@ -1,7 +1,9 @@
 package com.damosais.sid.database.services;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -40,6 +42,10 @@ import com.damosais.sid.webapp.WebApplication;
 import com.neovisionaries.i18n.CountryCode;
 import com.vaadin.ui.Notification;
 
+import net.sourceforge.jdistlib.disttest.NormalityTest;
+import net.sourceforge.jdistlib.exception.PrecisionException;
+import net.sourceforge.jdistlib.util.Utilities;
+
 /**
  * This service is responsible of retrieving, creating, deleting and updating any correlation in the database
  *
@@ -71,6 +77,7 @@ public class CorrelationHypothesisService {
      * @param correlationsView
      *            The view which called the calculation
      */
+    @SuppressWarnings("deprecation")
     public void calculateHyphotesisSimpleCorrelations(CorrelationHypothesis correlationHypothesis, CorrelationsView correlationsView) throws MathRuntimeException {
         // 1st) We need to get the event data
         final List<Event> events = retrieveEventData(correlationHypothesis);
@@ -137,9 +144,22 @@ public class CorrelationHypothesisService {
                     if (Double.isNaN(result.getStandardError())) {
                         result.setStandardError(1.0d);
                     }
+                    // 5.4) We calculate the normality of both data sets. To do that we need to sort the arrays before doing it
+                    Utilities.sort(valuesArray);
+                    Utilities.sort(eventsArray);
+                    if (valuesArray.length < 30) {
+                        result.setValuesNormality(NormalityTest.shapiro_wilk_statistic(valuesArray));
+                        result.setEventsNormality(NormalityTest.shapiro_wilk_statistic(eventsArray));
+                    } else {
+                        result.setValuesNormality(NormalityTest.kolmogorov_smirnov_statistic(valuesArray));
+                        result.setEventsNormality(NormalityTest.kolmogorov_smirnov_statistic(eventsArray));
+                    }
                 } catch (final MathIllegalArgumentException e) {
                     errors.add("Problem with the correlation calculation for variable " + variable.getName() + " on " + country.getName() + ": interpolation of data for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1));
                     LOGGER.error("Failed to calculate correlation for hypothesis " + e.getMessage(), e);
+                } catch (final PrecisionException e) {
+                    LOGGER.debug("Failure calculating the normality of the data distributions: " + e.getMessage(), e);
+                    // Do nothing
                 }
                 correlationResultDAO.save(result);
                 if (newItem) {
@@ -167,10 +187,11 @@ public class CorrelationHypothesisService {
     /**
      * This method creates all possible correlation hypothesis
      *
+     * @param variables
      * @param minEventsValue
      * @return
      */
-    public List<CorrelationHypothesis> generateHypothesis(int minEventsValue) {
+    public List<CorrelationHypothesis> generateHypothesis(Set<SocioeconomicVariable> variables, int minEventsValue) {
         // 1st) We get a list of all the existing correlations to avoid duplicates
         final List<CorrelationHypothesis> existingOnes = new ArrayList<>();
         correlationHypothesisDAO.findAll().forEach(existingOnes::add);
@@ -179,7 +200,7 @@ public class CorrelationHypothesisService {
         final Map<CountryCode, Map<SocioeconomicVariable, YearMonth>> minDatesByCountryAndVariable = new HashMap<>();
         final Map<CountryCode, Map<SocioeconomicVariable, YearMonth>> maxDatesByCountryAndVariable = new HashMap<>();
         final Map<CountryCode, Map<SocioeconomicVariable, Integer>> numberOfValuesByCountryAndVariable = new HashMap<>();
-        for (final CountryVariableValue value : countryVariableValueDAO.findAll()) {
+        for (final CountryVariableValue value : variables == null || variables.isEmpty() ? countryVariableValueDAO.findAll() : countryVariableValueDAO.findByVariableIn(variables)) {
             // 2.1) We get the values of that country
             Map<SocioeconomicVariable, YearMonth> minDatesPerVariable = minDatesByCountryAndVariable.get(value.getCountry());
             Map<SocioeconomicVariable, YearMonth> maxDatesPerVariable = maxDatesByCountryAndVariable.get(value.getCountry());
@@ -283,6 +304,9 @@ public class CorrelationHypothesisService {
                 continue;
             }
             // 4.1.2) We now loop the variables to see which ones are available to test and take the dates there to define the ranges
+            if (!minDatesByCountryAndVariable.containsKey(targetCountry)) {
+                continue;
+            }
             for (final SocioeconomicVariable variable : minDatesByCountryAndVariable.get(targetCountry).keySet()) {
                 // We need at least three values on the variable
                 if (numberOfValuesByCountryAndVariable.get(targetCountry).get(variable) < 3) {
@@ -300,7 +324,7 @@ public class CorrelationHypothesisService {
                     continue;
                 }
                 final CorrelationHypothesis correlationHypothesis = new CorrelationHypothesis();
-                correlationHypothesis.setTargetCountries(new HashSet<>(Arrays.asList(new CountryCode[] { targetCountry })));
+                correlationHypothesis.setTargetCountry(targetCountry);
                 correlationHypothesis.setSector(Sector.ROOT);
                 correlationHypothesis.setVariables(new HashSet<>(Arrays.asList(new SocioeconomicVariable[] { variable })));
                 correlationHypothesis.setStartDate(Date.from(minDate.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
@@ -313,6 +337,9 @@ public class CorrelationHypothesisService {
             }
 
             // 4.2) We then create the hypothesis which involves the countries source of the attacks
+            if (!eventsByTargetAndSourceCountry.containsKey(targetCountry)) {
+                continue;
+            }
             for (final CountryCode sourceCountry : eventsByTargetAndSourceCountry.get(targetCountry).keySet()) {
                 // 4.2.1) We apply the same limit in this type of correlations
                 if (minEventsValue > 0 && eventsByTargetAndSourceCountry.get(targetCountry).get(sourceCountry) < minEventsValue) {
@@ -330,6 +357,9 @@ public class CorrelationHypothesisService {
                         continue;
                     }
                     final YearMonth minTargetVariableDate = minDatesByCountryAndVariable.get(targetCountry).get(variable);
+                    if (!minDatesByCountryAndVariable.containsKey(sourceCountry)) {
+                        continue;
+                    }
                     final YearMonth minSourceVariableDate = minDatesByCountryAndVariable.get(sourceCountry).get(variable);
                     final YearMonth minEventsDate = minDateByTargetAndSourceCountry.get(targetCountry).get(sourceCountry);
                     if (minSourceVariableDate == null || minEventsDate == null) {
@@ -351,7 +381,7 @@ public class CorrelationHypothesisService {
                         continue;
                     }
                     final CorrelationHypothesis correlationHypothesis = new CorrelationHypothesis();
-                    correlationHypothesis.setTargetCountries(new HashSet<>(Arrays.asList(new CountryCode[] { targetCountry })));
+                    correlationHypothesis.setTargetCountry(targetCountry);
                     correlationHypothesis.setSector(Sector.ROOT);
                     correlationHypothesis.setVariables(new HashSet<>(Arrays.asList(new SocioeconomicVariable[] { variable })));
                     correlationHypothesis.setStartDate(Date.from(minVariableDate.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant()));
@@ -374,10 +404,10 @@ public class CorrelationHypothesisService {
      *            The correlation for which we are doing the comparison
      * @return A list of the time buckets we need to create
      */
-    private List<YearMonth> generateTimeBuckets(CorrelationHypothesis correlation) {
+    public List<YearMonth> generateTimeBuckets(CorrelationHypothesis correlation) {
         // 1st) We define the end and start plus the format of the buckets
-        YearMonth startDate = YearMonth.from(correlation.getStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-        final YearMonth endDate = YearMonth.from(correlation.getEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        YearMonth startDate = YearMonth.from(correlation.getEffectiveStartDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+        final YearMonth endDate = YearMonth.from(correlation.getEffectiveEndDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
 
         // 2nd) We loop from start to end month by month adding to the bucket
         final List<YearMonth> timeBuckets = new ArrayList<>();
@@ -399,7 +429,7 @@ public class CorrelationHypothesisService {
      *            The time buckets on which place the events
      * @return An array with the frequency of the events per time bucket
      */
-    private double[] getEventsDataArray(List<Event> events, List<YearMonth> timeBuckets) {
+    public double[] getEventsDataArray(List<Event> events, List<YearMonth> timeBuckets) {
         final double[] eventsArray = new double[timeBuckets.size()];
         // We loop per each event
         for (final Event event : events) {
@@ -445,7 +475,12 @@ public class CorrelationHypothesisService {
             if (valuesPerBucket.containsKey(timeBucket)) {
                 valuesArray[position++] = valuesPerBucket.get(timeBucket).getValue();
             } else {
-                valuesArray[position++] = function.value(Date.from(timeBucket.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant()).getTime());
+                try {
+                    valuesArray[position++] = function.value(Date.from(timeBucket.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant()).getTime());
+                } catch (final OutOfRangeException e) {
+                    LOGGER.debug("The value for the country " + result.getCountry() + " and date " + timeBucket + " is out of the interpolating range", e);
+                    valuesArray[position - 1] = e.getArgument().doubleValue();
+                }
                 interpolated = true;
             }
         }
@@ -473,12 +508,13 @@ public class CorrelationHypothesisService {
      *            the correlation for which we are trying to obtain the data
      * @return A list with the events that match the given criteria
      */
-    private List<Event> retrieveEventData(CorrelationHypothesis correlation) {
+    public List<Event> retrieveEventData(CorrelationHypothesis correlation) {
         List<Event> events = new ArrayList<>();
         // 1st) First we get the events that match the given dates, target countries and sector
-        for (final CountryCode country : correlation.getTargetCountries()) {
-            events.addAll(eventDAO.findByDateBetweenAndTargetCountry(correlation.getStartDate(), correlation.getEndDate(), country).stream().filter(event -> event.getTarget().getOwner().getSector().isChildOf(correlation.getSector())).collect(Collectors.toList()));
-        }
+        final LocalDate endDate = new java.sql.Date(correlation.getEndDate().getTime()).toLocalDate();
+        final LocalDate lastDay = endDate.with(TemporalAdjusters.lastDayOfMonth());
+        events.addAll(eventDAO.findByDateBetweenAndTargetCountry(correlation.getStartDate(), java.sql.Date.valueOf(lastDay), correlation.getEffectiveTargetCountry()).stream().filter(event -> event.getTarget().getOwner().getSector().isChildOf(correlation.getSector())).collect(Collectors.toList()));
+
         // 2nd) If they have defined a source country then we apply a filter on that as well
         if (correlation.getSourceCountries() != null && !correlation.getSourceCountries().isEmpty()) {
             events = events.stream().filter(event -> {
@@ -505,9 +541,9 @@ public class CorrelationHypothesisService {
     private Map<CountryCode, Map<SocioeconomicVariable, List<CountryVariableValue>>> retrieveSocioeconomicData(CorrelationHypothesis correlation) {
         // 1st) We create a single list of countries for which we need to retrieve the data
         final Set<CountryCode> countries = new HashSet<>();
-        countries.addAll(correlation.getTargetCountries());
-        if (correlation.getSourceCountries() != null && !correlation.getSourceCountries().isEmpty()) {
-            countries.addAll(correlation.getSourceCountries());
+        countries.add(correlation.getEffectiveTargetCountry());
+        if (correlation.getEffectiveSourceCountries() != null && !correlation.getEffectiveSourceCountries().isEmpty()) {
+            countries.addAll(correlation.getEffectiveSourceCountries());
         }
         
         // 2nd) We loop per each country and retrieve all data of that country and variable (we do not filter by date so we can interpolate better)

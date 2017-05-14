@@ -55,27 +55,28 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
     private Button addTarget;
     private FilterTable ownersTable;
     private FilterTable targetsTable;
-
-    @Autowired
-    private OwnerService ownerService;
-
-    @Autowired
-    private TargetService targetService;
-
-    @Autowired
-    private OwnerWindow ownerWindow;
     
     @Autowired
-    private TargetWindow targetWindow;
+    private OwnerService ownerService;
+    
+    @Autowired
+    private TargetService targetService;
+    
+    @Autowired
+    private OwnerWindow ownerWindow;
 
+    @Autowired
+    private TargetWindow targetWindow;
+    
     /**
      * The constructor just makes the component to space and have margins
      */
     public OwnersView() {
         setSpacing(true);
         setMargin(true);
+        setSizeFull();
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -119,7 +120,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
             }
         }
     }
-
+    
     private void createButtons() {
         addOwner = new Button("Add owner", this);
         addOwner.setStyleName("link");
@@ -128,12 +129,12 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         addTarget.setStyleName("link");
         addTarget.setIcon(GraphicResources.ADD_ICON);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         // Nothing to do when entering the view
     }
-    
+
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -157,7 +158,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -174,20 +175,26 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         setComponentAlignment(addOwner, Alignment.TOP_CENTER);
         addComponent(ownersTable);
         setComponentAlignment(ownersTable, Alignment.TOP_CENTER);
-        
+        setExpandRatio(ownersTable, 0.7f);
+
         final Label targetLabel = new Label("<center><p>A target in military terminology is an object that is shot during practice. In our case it represents an asset owned by a victim which is the objective of a security incident.<br/> Once you have selected a owner in the above table you will be able to see, edit, add or remove targets for it in the table below.</p></center>", ContentMode.HTML);
         addComponent(targetLabel);
         addComponent(addTarget);
         setComponentAlignment(addTarget, Alignment.MIDDLE_CENTER);
         addComponent(targetsTable);
         setComponentAlignment(targetsTable, Alignment.MIDDLE_CENTER);
+        setExpandRatio(targetsTable, 0.7f);
     }
-
+    
     private void initializeTables() {
         // We create the tables
         ownersTable = new FilterTable();
+        ownersTable.setSortEnabled(true);
+        ownersTable.setSizeFull();
         ownersTable.setFilterBarVisible(true);
         targetsTable = new FilterTable();
+        targetsTable.setSortEnabled(true);
+        targetsTable.setSizeFull();
         targetsTable.setFilterBarVisible(true);
         // We add a column with the button to edit the details
         ownersTable.addGeneratedColumn(EDIT_BUTTON, this);
@@ -223,11 +230,22 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         ownersTable.setImmediate(true);
         // Handle selection change.
         ownersTable.addValueChangeListener(event -> refreshTargetsTableContent((Owner) ownersTable.getValue()));
+        // We then collapse the columns that have less value
+        ownersTable.setColumnCollapsingAllowed(true);
+        ownersTable.setColumnCollapsed("created", true);
+        ownersTable.setColumnCollapsed("createdBy.name", true);
+        ownersTable.setColumnCollapsed("updated", true);
+        ownersTable.setColumnCollapsed("updatedBy.name", true);
+        targetsTable.setColumnCollapsingAllowed(true);
+        targetsTable.setColumnCollapsed("created", true);
+        targetsTable.setColumnCollapsed("createdBy.name", true);
+        targetsTable.setColumnCollapsed("updated", true);
+        targetsTable.setColumnCollapsed("updatedBy.name", true);
         // Now we refresh the content of the tables
         refreshOwnersTableContent();
         refreshTargetsTableContent(null);
     }
-
+    
     /**
      * Refreshes the table with the owners data
      */
@@ -236,7 +254,7 @@ public class OwnersView extends VerticalLayout implements View, ColumnGenerator,
         ownersContainer.removeAllItems();
         ownersContainer.addAll(ownerService.list());
     }
-
+    
     /**
      * Refreshes the table with the targets data
      *

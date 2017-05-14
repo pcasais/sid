@@ -72,25 +72,26 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
     private File tempXML;
     private BufferedWriter bufferedWriter;
     private CVENVDParser cveNvdParser;
-    
+
     @Autowired
     private VulnerabilityService vulnerabilityService;
-
+    
     @Autowired
     private CVEDefinitionService cveDefinitionService;
-    
-    @Autowired
-    private VulnerabilityWindow vulnerabilityWindow;
 
     @Autowired
-    private CVEWindow cveWindow;
+    private VulnerabilityWindow vulnerabilityWindow;
     
+    @Autowired
+    private CVEWindow cveWindow;
+
     /**
      * The constructor just sets the spacing and the margins and initialises the parser
      */
     public VulnerabilitiesView() {
         setSpacing(true);
         setMargin(true);
+        setSizeFull();
         try {
             cveNvdParser = new CVENVDParser();
         } catch (final SAXException e) {
@@ -98,7 +99,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
             LOGGER.error("Problem creating CVE NVD parser", e);
         }
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -133,7 +134,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
             }
         }
     }
-
+    
     private void closeTempXmlWriter() {
         if (bufferedWriter != null) {
             try {
@@ -145,7 +146,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
             bufferedWriter = null;
         }
     }
-
+    
     private void createButtons() {
         addVulnerability = new Button("Add vulnerability", this);
         addVulnerability.setStyleName("link");
@@ -160,12 +161,12 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         updateCVEs.setButtonCaption("Update CVEs from file");
         updateCVEs.setImmediate(true);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // Nothing to do when entering the view
     }
-    
+
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -189,7 +190,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -206,7 +207,8 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         setComponentAlignment(addVulnerability, Alignment.TOP_CENTER);
         addComponent(vulnerabilityTable);
         setComponentAlignment(vulnerabilityTable, Alignment.TOP_CENTER);
-
+        setExpandRatio(vulnerabilityTable, 0.7f);
+        
         final Label cveLabel = new Label("<center><p>A <b>CVE</b> is a common identifier used by the US-CERT to categorise vulnerabilities. A CVE definition contains an ID and standardised details of a vulnerability.<br/> Below you can see the current known CVE definitions, you can edit, add, delete or upload definitions</p></center>", ContentMode.HTML);
         addComponent(cveLabel);
         final HorizontalLayout cveButtons = new HorizontalLayout();
@@ -217,14 +219,18 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         setComponentAlignment(cveButtons, Alignment.MIDDLE_CENTER);
         addComponent(cveTable);
         setComponentAlignment(cveTable, Alignment.MIDDLE_CENTER);
+        setExpandRatio(cveTable, 0.3f);
     }
-    
+
     private void initializeTables() {
         // We create the tables
         vulnerabilityTable = new FilterTable();
+        vulnerabilityTable.setSortEnabled(true);
+        vulnerabilityTable.setSizeFull();
         vulnerabilityTable.setFilterBarVisible(true);
         cveTable = new FilterTable();
-        cveTable.setWidth(100, Unit.PERCENTAGE);
+        cveTable.setSortEnabled(true);
+        cveTable.setSizeFull();
         cveTable.setFilterBarVisible(true);
         // We add a column with the button to edit the details
         vulnerabilityTable.addGeneratedColumn(EDIT_BUTTON, this);
@@ -252,11 +258,22 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         vulnerabilityTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         cveTable.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         cveTable.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
+        // We then collapse the columns that have less value
+        vulnerabilityTable.setColumnCollapsingAllowed(true);
+        vulnerabilityTable.setColumnCollapsed("created", true);
+        vulnerabilityTable.setColumnCollapsed("createdBy.name", true);
+        vulnerabilityTable.setColumnCollapsed("updated", true);
+        vulnerabilityTable.setColumnCollapsed("updatedBy.name", true);
+        cveTable.setColumnCollapsingAllowed(true);
+        cveTable.setColumnCollapsed("created", true);
+        cveTable.setColumnCollapsed("createdBy.name", true);
+        cveTable.setColumnCollapsed("updated", true);
+        cveTable.setColumnCollapsed("updatedBy.name", true);
         // Now we refresh the content of the tables
         refreshVulnerabilitiesTableContent();
         refreshCVEsTableContent();
     }
-    
+
     @Override
     public OutputStream receiveUpload(String filename, String mimeType) {
         return new OutputStream() {
@@ -266,7 +283,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
             }
         };
     }
-    
+
     /**
      * Refreshes the table with the targets data
      *
@@ -277,7 +294,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         cveContainer.removeAllItems();
         cveContainer.addAll(cveDefinitionService.list());
     }
-    
+
     /**
      * Refreshes the table with the vulnerabilities data
      */
@@ -286,7 +303,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         vulnerabilityContainer.removeAllItems();
         vulnerabilityContainer.addAll(vulnerabilityService.list());
     }
-    
+
     @Override
     public void uploadFailed(FailedEvent event) {
         closeTempXmlWriter();
@@ -295,7 +312,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
         }
         new Notification(FAILURE, "Error uploading file: " + event.getReason().getLocalizedMessage(), Notification.Type.ERROR_MESSAGE).show(getUI().getPage());
     }
-    
+
     @Override
     public void uploadStarted(StartedEvent event) {
         try {
@@ -306,7 +323,7 @@ public class VulnerabilitiesView extends VerticalLayout implements View, ClickLi
             LOGGER.error("Error creating temporary file for upload", e);
         }
     }
-    
+
     @Override
     public void uploadSucceeded(SucceededEvent event) {
         closeTempXmlWriter();

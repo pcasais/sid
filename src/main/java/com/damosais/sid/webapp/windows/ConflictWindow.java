@@ -1,5 +1,7 @@
 package com.damosais.sid.webapp.windows;
 
+import java.util.EnumSet;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,12 +13,16 @@ import com.damosais.sid.database.services.ConflictService;
 import com.damosais.sid.webapp.ConflictsView;
 import com.damosais.sid.webapp.GraphicResources;
 import com.damosais.sid.webapp.WebApplication;
+import com.damosais.sid.webapp.customfields.CountryFieldConverter;
 import com.damosais.sid.webapp.customfields.CountrySelector;
+import com.neovisionaries.i18n.CountryCode;
 import com.vaadin.data.fieldgroup.BeanFieldGroup;
+import com.vaadin.data.util.BeanContainer;
 import com.vaadin.data.validator.NullValidator;
 import com.vaadin.shared.ui.datefield.Resolution;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.DateField;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.Notification;
@@ -84,7 +90,12 @@ public class ConflictWindow extends Window {
         form.addComponent(nameField);
 
         // 3rd) We now add the country (due to the lack of a toString() that shows proper content we need this hack)
-        final CountrySelector location = new CountrySelector("Location", false);
+        final BeanContainer<Integer, CountryCode> countryContainer = new BeanContainer<>(CountryCode.class);
+        countryContainer.setBeanIdProperty("numeric");
+        countryContainer.addAll(EnumSet.allOf(CountryCode.class));
+        final ComboBox location = new ComboBox("Location", countryContainer);
+        location.setItemCaptionPropertyId("name");
+        location.setConverter(new CountryFieldConverter());
         binder.bind(location, "location");
         form.addComponent(location);
         final CountrySelector partiesInvolved = new CountrySelector("Parties involved", false);

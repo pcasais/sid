@@ -1,6 +1,8 @@
 package com.damosais.sid.webapp.windows;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.math3.exception.MathRuntimeException;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.damosais.sid.database.beans.CorrelationHypothesis;
 import com.damosais.sid.database.beans.CorrelationResult;
+import com.damosais.sid.database.beans.SocioeconomicVariable;
 import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.services.CorrelationHypothesisService;
 import com.damosais.sid.webapp.CorrelationsView;
@@ -20,6 +23,7 @@ import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.ListSelect;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.ProgressBar;
 import com.vaadin.ui.TextField;
@@ -54,10 +58,9 @@ public class CorrelationSearchWindow extends Window {
         content.setMargin(true);
         setContent(content);
         setSizeUndefined();
-        center();
     }
 
-    private void executeSearch(TextField minEventsField, CheckBox filterRelevantCorrelationsOnly, Label status, ProgressBar progress, Button startButton, CorrelationsView view) {
+    private void executeSearch(Set<SocioeconomicVariable> variables, TextField minEventsField, CheckBox filterRelevantCorrelationsOnly, Label status, ProgressBar progress, Button startButton, CorrelationsView view) {
         new Thread(() -> {
             final String minEventsValueRaw = minEventsField.getValue();
             try {
@@ -71,7 +74,7 @@ public class CorrelationSearchWindow extends Window {
                 // 2nd) We start creating the correlation hypothesis
                 UI.getCurrent().access(() -> status.setValue("<b>Creating correlation hypothesis with the given criteria.</b> Please wait"));
                 UI.getCurrent().push();
-                final List<CorrelationHypothesis> correlationHypothesis = correlationHypothesisService.generateHypothesis(minEventsValue);
+                final List<CorrelationHypothesis> correlationHypothesis = correlationHypothesisService.generateHypothesis(variables, minEventsValue);
                 final int total = correlationHypothesis.size();
 
                 // 3rd) We now start to run every correlation and check the results
@@ -110,6 +113,7 @@ public class CorrelationSearchWindow extends Window {
                     UI.getCurrent().access(() -> progress.setValue((float) index.incrementAndGet() / total));
                     UI.getCurrent().push();
                 }
+                UI.getCurrent().access(() -> status.setValue("<b>All " + total + " correlation hypothesis processed.</b> You can now close the window"));
             } catch (final NumberFormatException e) {
                 new Notification("Error", "Problem defining minimum number of events (values are 0 for no minimum, integer positive values for minimum): " + e.getMessage(), Notification.Type.ERROR_MESSAGE).show(UI.getCurrent().getPage());
                 LOGGER.error("Problem with minimum events: " + e.getMessage(), e);
@@ -123,8 +127,13 @@ public class CorrelationSearchWindow extends Window {
     /**
      * This method generates the form content and prepares the window to run
      */
+    @SuppressWarnings("unchecked")
     public void generateForm(CorrelationsView view) {
         content.removeAllComponents();
+        final ListSelect socioEconomicVariables = new ListSelect("Variables", Arrays.asList(SocioeconomicVariable.values()));
+        socioEconomicVariables.setImmediate(true);
+        socioEconomicVariables.setMultiSelect(true);
+        content.addComponent(socioEconomicVariables);
         final TextField minEvents = new TextField("Min Events", "0");
         content.addComponent(minEvents);
         final CheckBox filterRelevantCorrelationsOnly = new CheckBox("Filter relevant only", false);
@@ -138,7 +147,7 @@ public class CorrelationSearchWindow extends Window {
         final Button startButton = new Button("Start search");
         startButton.addClickListener(event -> {
             startButton.setEnabled(false);
-            executeSearch(minEvents, filterRelevantCorrelationsOnly, status, progress, startButton, view);
+            executeSearch((Set<SocioeconomicVariable>) socioEconomicVariables.getValue(), minEvents, filterRelevantCorrelationsOnly, status, progress, startButton, view);
         });
         startButton.setIcon(GraphicResources.RUN_ICON);
         content.addComponent(startButton);

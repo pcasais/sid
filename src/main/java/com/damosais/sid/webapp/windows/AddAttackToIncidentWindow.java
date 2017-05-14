@@ -18,6 +18,7 @@ import com.damosais.sid.webapp.WebApplication;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
@@ -34,10 +35,10 @@ public class AddAttackToIncidentWindow extends Window {
     private static final Logger LOGGER = Logger.getLogger(AddEventToAttackWindow.class);
     private static final long serialVersionUID = -507586143880266424L;
     private final VerticalLayout content;
-    
+
     @Autowired
     private AttackService attackService;
-    
+
     /**
      * Creates a new window to add attacks to an existing incident
      */
@@ -51,7 +52,7 @@ public class AddAttackToIncidentWindow extends Window {
         setContent(content);
         setCaption("Adding attack to incident");
     }
-    
+
     /**
      * Prepares the window to add an existing attack to an incident
      *
@@ -63,8 +64,9 @@ public class AddAttackToIncidentWindow extends Window {
     public void openAddWindow(Incident incidetToAlter, IncidentsView incidentsView) {
         // 1st) We initialise the form and add the combo box (we only add events that are not assigned)
         final VerticalLayout form = new VerticalLayout();
+        form.addComponent(new Label("If there are no attacks in the table below is because they have already all been assigned to an incident"));
         final List<Attack> attacksFiltered = attackService.list().stream().filter(attack -> attack.getIncident() == null).collect(Collectors.toList());
-        
+
         final FilterTable attacksTable = new FilterTable();
         attacksTable.setFilterBarVisible(true);
         final BeanItemContainer<Attack> attacksContainer = new BeanItemContainer<>(Attack.class);
@@ -79,7 +81,7 @@ public class AddAttackToIncidentWindow extends Window {
         attacksTable.setImmediate(true);
         attacksContainer.addAll(attacksFiltered);
         form.addComponent(attacksTable);
-
+        
         // 2nd) Now we create the button to save
         final User user = ((WebApplication) incidentsView.getUI()).getUser();
         final Button saveButton = new Button("Save", event -> {
@@ -104,7 +106,7 @@ public class AddAttackToIncidentWindow extends Window {
         });
         saveButton.setStyleName("link");
         saveButton.setIcon(GraphicResources.SAVE_ICON);
-
+        
         // 3rd) Finally we clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);

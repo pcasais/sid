@@ -42,21 +42,22 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
     private BeanItemContainer<Tool> container;
     private Button addEvent;
     private FilterTable table;
-
+    
     @Autowired
     private ToolService toolService;
-    
+
     @Autowired
     private ToolWindow toolWindow;
-    
+
     /**
      * The constructor just enables the spacing and margins on the layout
      */
     public ToolsView() {
         setSpacing(true);
         setMargin(true);
+        setSizeFull();
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -76,7 +77,7 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
             }
         }
     }
-    
+
     private void createButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addEvent = new Button("Add tool", this);
@@ -87,12 +88,12 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         addComponent(hl);
         setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-
+    
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -112,7 +113,7 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         // Finally we return the button
         return button;
     }
-
+    
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -128,15 +129,18 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         // Now we add the table to the view
         addComponent(table);
         setComponentAlignment(table, Alignment.TOP_CENTER);
+        setExpandRatio(table, 1.0f);
     }
-    
+
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
     private void initializeTable() {
         // We create a table and set the source of data as the container
         table = new FilterTable();
+        table.setSizeFull();
         table.setFilterBarVisible(true);
+        table.setSortEnabled(true);
         // We add a column with the button to edit the attack details
         table.addGeneratedColumn(EDIT_BUTTON, this);
         // We add a column with the button to delete the attack
@@ -151,10 +155,16 @@ public class ToolsView extends VerticalLayout implements View, ClickListener, Co
         table.setColumnHeaders(new String[] { "Name", "Type", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
+        // We then collapse the columns that have less value
+        table.setColumnCollapsingAllowed(true);
+        table.setColumnCollapsed("created", true);
+        table.setColumnCollapsed("createdBy.name", true);
+        table.setColumnCollapsed("updated", true);
+        table.setColumnCollapsed("updatedBy.name", true);
         // Now we refresh the content
         refreshTableContent();
     }
-
+    
     /**
      * It refreshes the content of the table
      */

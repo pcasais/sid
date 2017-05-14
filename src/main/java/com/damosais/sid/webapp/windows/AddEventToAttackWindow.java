@@ -17,6 +17,7 @@ import com.damosais.sid.webapp.WebApplication;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Window;
@@ -62,6 +63,7 @@ public class AddEventToAttackWindow extends Window {
     public void openAddWindow(Attack attackToAlter, AttacksView attacksView) {
         // 1st) We initialise the form and add the combo box (we only add events that are not assigned)
         final VerticalLayout form = new VerticalLayout();
+        form.addComponent(new Label("If you can't see any events in the table is because they have all been assigned to other attacks"));
         final List<com.damosais.sid.database.beans.Event> eventsFiltered = eventService.list().stream().filter(event -> event.getAttack() == null).collect(Collectors.toList());
         
         final FilterTable eventsTable = new FilterTable();
@@ -89,12 +91,12 @@ public class AddEventToAttackWindow extends Window {
                 final com.damosais.sid.database.beans.Event selectedEvent = (com.damosais.sid.database.beans.Event) eventsTable.getValue();
                 if (selectedEvent != null) {
                     selectedEvent.setAttack(attackToAlter);
-                    selectedEvent.setUpdatedBy(user);
-                    eventService.save(selectedEvent);
-                    attacksView.refreshEventsTableContent(attackToAlter);
-                    new Notification("Success", "Event added to attack in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
-                    getUI().removeWindow(this);
                 }
+                selectedEvent.setUpdatedBy(user);
+                eventService.save(selectedEvent);
+                attacksView.refreshEventsTableContent(attackToAlter);
+                new Notification("Success", "Event added to attack in the database", Notification.Type.TRAY_NOTIFICATION).show(getUI().getPage());
+                getUI().removeWindow(this);
             } catch (final Exception e) {
                 LOGGER.error("Problem saving event in database", e);
                 Throwable cause = e;

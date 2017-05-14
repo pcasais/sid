@@ -9,6 +9,7 @@ import com.damosais.sid.database.beans.Conflict;
 import com.damosais.sid.database.beans.User;
 import com.damosais.sid.database.beans.UserRole;
 import com.damosais.sid.database.services.ConflictService;
+import com.damosais.sid.webapp.customfields.YearMonthDayDate;
 import com.damosais.sid.webapp.windows.ConflictWindow;
 import com.vaadin.data.util.BeanItem;
 import com.vaadin.data.util.BeanItemContainer;
@@ -40,21 +41,22 @@ public class ConflictsView extends VerticalLayout implements View, ClickListener
     private BeanItemContainer<Conflict> container;
     private Button addConflict;
     private FilterTable table;
-
+    
     @Autowired
     private ConflictService conflictService;
-    
+
     @Autowired
     private ConflictWindow conflictWindow;
-    
+
     /**
      * The constructor just enables the spacing and margins on the layout
      */
     public ConflictsView() {
         setSpacing(true);
         setMargin(true);
+        setSizeFull();
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -74,7 +76,7 @@ public class ConflictsView extends VerticalLayout implements View, ClickListener
             }
         }
     }
-
+    
     private void createButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addConflict = new Button("Add conflict", this);
@@ -85,12 +87,12 @@ public class ConflictsView extends VerticalLayout implements View, ClickListener
         addComponent(hl);
         setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-    
+
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -110,7 +112,7 @@ public class ConflictsView extends VerticalLayout implements View, ClickListener
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the ConflictsView we create the table and the buttons
      */
@@ -123,14 +125,17 @@ public class ConflictsView extends VerticalLayout implements View, ClickListener
         // Now we add the table to the view
         addComponent(table);
         setComponentAlignment(table, Alignment.TOP_CENTER);
+        setExpandRatio(table, 1.0f);
     }
-
+    
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
     private void initializeTable() {
         // We create a table and set the source of data as the container
         table = new FilterTable();
+        table.setSortEnabled(true);
+        table.setSizeFull();
         table.setFilterBarVisible(true);
         // We add a column with the button to edit the conflict details
         table.addGeneratedColumn(EDIT_BUTTON, this);
@@ -138,18 +143,27 @@ public class ConflictsView extends VerticalLayout implements View, ClickListener
         table.addGeneratedColumn(DELETE_BUTTON, this);
         // Now we add the container
         container = new BeanItemContainer<>(Conflict.class);
+        container.addNestedContainerProperty("location.name");
         container.addNestedContainerProperty("createdBy.name");
         container.addNestedContainerProperty("updatedBy.name");
         table.setContainerDataSource(container);
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "start", "end", "name", "location", "partiesInvolved", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
-        table.setColumnHeaders(new String[] { "Start", "End", "Name", "Location", "Parties Involved", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
+        table.setVisibleColumns(new Object[] { "start", "end", "name", "location.name", "partiesInvolved", "created", "createdBy.name", "updated", "updatedBy.name", EDIT_BUTTON, DELETE_BUTTON });
+        table.setColumnHeaders(new String[] { "Start", "End", "Name", "Location.name", "Parties Involved", "Created", "Created by", "Last update", "Last updated by", "Edit", "Delete" });
         table.setColumnAlignment(EDIT_BUTTON, CustomTable.Align.CENTER);
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
+        table.setConverter("start", new YearMonthDayDate());
+        table.setConverter("end", new YearMonthDayDate());
+        // We then collapse the columns that have less value
+        table.setColumnCollapsingAllowed(true);
+        table.setColumnCollapsed("created", true);
+        table.setColumnCollapsed("createdBy.name", true);
+        table.setColumnCollapsed("updated", true);
+        table.setColumnCollapsed("updatedBy.name", true);
         // Now we refresh the content
         refreshTableContent();
     }
-    
+
     /**
      * It refreshes the content of the table
      */

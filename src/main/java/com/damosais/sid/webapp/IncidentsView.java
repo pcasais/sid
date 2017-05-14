@@ -55,27 +55,28 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
     private Button addAttack;
     private FilterTable incidentsTable;
     private FilterTable attacksTable;
-
+    
     @Autowired
     private IncidentService incidentService;
-    
+
     @Autowired
     private AttackService attackService;
-
+    
     @Autowired
     private IncidentWindow incidentWindow;
-
+    
     @Autowired
     private AddAttackToIncidentWindow addAttackWindow;
-    
+
     /**
      * The constructor just sets the spacing and the margin
      */
     public IncidentsView() {
         setSpacing(true);
         setMargin(true);
+        setSizeFull();
     }
-
+    
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -117,7 +118,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
             }
         }
     }
-    
+
     private void createButtons() {
         addIncident = new Button("Add Incident", this);
         addIncident.setStyleName("link");
@@ -126,12 +127,12 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         addAttack.setStyleName("link");
         addAttack.setIcon(GraphicResources.ADD_ICON);
     }
-    
+
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-    
+
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
         // First we create a button and set its data with the incident
@@ -154,7 +155,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         // Finally we return the button
         return button;
     }
-    
+
     /**
      * When we start the EventsView we create the table and the buttons
      */
@@ -171,21 +172,27 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         setComponentAlignment(addIncident, Alignment.MIDDLE_CENTER);
         addComponent(incidentsTable);
         setComponentAlignment(incidentsTable, Alignment.MIDDLE_CENTER);
-
+        setExpandRatio(incidentsTable, 0.7f);
+        
         final Label attackLabel = new Label("<center><p>In the <b>Attacks</b> you can review the existing attacks and its definitions.<br/>Once you have selected an incident in the above table you will be able to assign and remove attacks that belong to it in the table below.</p></center>", ContentMode.HTML);
         addComponent(attackLabel);
         addComponent(addAttack);
         setComponentAlignment(addAttack, Alignment.TOP_CENTER);
         addComponent(attacksTable);
         setComponentAlignment(attacksTable, Alignment.TOP_CENTER);
+        setExpandRatio(attacksTable, 0.3f);
     }
-    
+
     private void initializeTables() {
         // We create the tables
         incidentsTable = new FilterTable();
         incidentsTable.setFilterBarVisible(true);
+        incidentsTable.setSortEnabled(true);
+        incidentsTable.setSizeFull();
         attacksTable = new FilterTable();
         attacksTable.setFilterBarVisible(true);
+        attacksTable.setSortEnabled(true);
+        attacksTable.setSizeFull();
         // We add a column with the button to edit and delete the incident
         incidentsTable.addGeneratedColumn(EDIT_BUTTON, this);
         incidentsTable.addGeneratedColumn(DELETE_BUTTON, this);
@@ -221,11 +228,22 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         incidentsTable.setImmediate(true);
         // Handle selection change.
         incidentsTable.addValueChangeListener(event -> refreshAttacksTableContent((Incident) incidentsTable.getValue()));
+        // We then collapse the columns that have less value
+        incidentsTable.setColumnCollapsingAllowed(true);
+        incidentsTable.setColumnCollapsed("created", true);
+        incidentsTable.setColumnCollapsed("createdBy.name", true);
+        incidentsTable.setColumnCollapsed("updated", true);
+        incidentsTable.setColumnCollapsed("updatedBy.name", true);
+        attacksTable.setColumnCollapsingAllowed(true);
+        attacksTable.setColumnCollapsed("created", true);
+        attacksTable.setColumnCollapsed("createdBy.name", true);
+        attacksTable.setColumnCollapsed("updated", true);
+        attacksTable.setColumnCollapsed("updatedBy.name", true);
         // Now we refresh the content of the tables
         refreshIncidentsTableContent();
         refreshAttacksTableContent(null);
     }
-
+    
     /**
      * Refreshes the table with the attacks data
      *
@@ -241,7 +259,7 @@ public class IncidentsView extends VerticalLayout implements View, ColumnGenerat
         attacksContainer.removeAllItems();
         attacksContainer.addAll(attacks);
     }
-
+    
     /**
      * Refreshes the table with the incidents data
      */

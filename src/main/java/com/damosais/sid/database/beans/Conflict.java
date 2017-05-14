@@ -34,115 +34,120 @@ public class Conflict {
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
+    
     @Column(name = "start", nullable = false)
     private Date start;
-
+    
     @Column(name = "end", nullable = true)
     private Date end;
-
+    
     @Column(name = "name", nullable = false)
     private String name;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    private Set<CountryCode> location;
-
+    
+    @Column(name = "location", nullable = false)
+    private CountryCode location;
+    
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<CountryCode> partiesInvolved;
-
+    
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
-
+    
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
-    
+
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-    
+
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
-
+    
     public Date getCreated() {
         return created;
     }
-    
+
     public User getCreatedBy() {
         return createdBy;
     }
-    
+
     public Date getEnd() {
         return end;
     }
-    
+
     public Long getId() {
         return id;
     }
-    
-    public Set<CountryCode> getLocation() {
+
+    public CountryCode getLocation() {
         return location;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public Set<CountryCode> getPartiesInvolved() {
         return partiesInvolved;
     }
-    
+
     public Date getStart() {
         return start;
     }
-    
+
     public Date getUpdated() {
         return updated;
     }
-
+    
     public User getUpdatedBy() {
         return updatedBy;
     }
-
+    
     public void setCreated(Date created) {
         this.created = created;
     }
-
+    
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
-
+    
     public void setEnd(Date end) {
         this.end = end;
     }
-
+    
     public void setId(Long id) {
         this.id = id;
     }
-
-    public void setLocation(Set<CountryCode> location) {
+    
+    public void setLocation(CountryCode location) {
         this.location = location;
     }
-
+    
     public void setName(String name) {
         this.name = name;
     }
-
+    
     public void setPartiesInvolved(Set<CountryCode> partiesInvolved) {
         this.partiesInvolved = partiesInvolved;
     }
-
+    
     public void setStart(Date start) {
         this.start = start;
     }
-
+    
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
-
+    
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }

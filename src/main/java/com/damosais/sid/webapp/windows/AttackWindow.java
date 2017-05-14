@@ -46,33 +46,32 @@ public class AttackWindow extends Window {
     private static final long serialVersionUID = -452236927715765818L;
     private final VerticalLayout content;
     private BeanFieldGroup<UnauthorizedResult> unauthorizedResultBinder;
-    
+
     @Autowired
     private UnauthorizedResultService unauthorizedResultService;
-    
+
     @Autowired
     private AttackService attackService;
-
+    
     @Autowired
     private ToolService toolService;
-
+    
     @Autowired
     private VulnerabilityService vulnerabilityService;
-    
+
     /**
      * Creates a new window to add or edit attacks
      */
     public AttackWindow() {
         setModal(true);
+        setSizeUndefined();
         content = new VerticalLayout();
         content.setSizeUndefined();
         content.setSpacing(true);
         content.setMargin(true);
         setContent(content);
-        setSizeUndefined();
-        center();
     }
-    
+
     /**
      * Creates the form to add or edit attacks
      *
@@ -89,25 +88,25 @@ public class AttackWindow extends Window {
         final BeanFieldGroup<Attack> binder = new BeanFieldGroup<>(Attack.class);
         binder.setItemDataSource(attack);
         binder.setBuffered(true);
-        
+
         // 2nd) Then we add the ComboBox with all the tools
         final ComboBox toolField = new ComboBox("Tool", toolService.list());
         binder.bind(toolField, "tool");
         form.addComponent(toolField);
-        
+
         // 3rd) We add the ComboBox with all the vulnerabilities
         final ComboBox vulnerabilityField = new ComboBox("Vulnerability", vulnerabilityService.list());
         binder.bind(vulnerabilityField, "vulnerability");
         form.addComponent(vulnerabilityField);
-        
+
         // 4th) We now create the table with the impact
         final FormLayout impactForm = createUnauthorizedResultForm(attack.getUnauthorizedResults());
-
+        
         // 5th) We now clear the window and add the components
         content.removeAllComponents();
         content.addComponent(form);
         content.addComponent(impactForm);
-        
+
         // 6th) Now we create the save button if the user can edit data
         final User user = ((WebApplication) attacksView.getUI()).getUser();
         if (user.getRole() == UserRole.EDIT_DATA) {
@@ -135,7 +134,7 @@ public class AttackWindow extends Window {
             content.setComponentAlignment(saveButton, Alignment.BOTTOM_CENTER);
         }
     }
-    
+
     /**
      * This method creates the form where the unauthorized results will be defined
      *
@@ -150,7 +149,7 @@ public class AttackWindow extends Window {
         unauthorizedResultBinder = new BeanFieldGroup<>(UnauthorizedResult.class);
         unauthorizedResultBinder.setItemDataSource(unauthorizedResult != null ? unauthorizedResult : new UnauthorizedResult());
         unauthorizedResultBinder.setBuffered(true);
-        
+
         // 2nd) We build the form by adding the fields
         final ComboBox type = new ComboBox("Type", Arrays.asList(UnathourizedResultType.values()));
         unauthorizedResultBinder.bind(type, "type");
@@ -180,10 +179,10 @@ public class AttackWindow extends Window {
         economicImpact.setConverter(new StringToDoubleConverter());
         unauthorizedResultBinder.bind(economicImpact, "economicImpact");
         form.addComponent(economicImpact);
-
+        
         return form;
     }
-    
+
     private void saveAttack(Attack commitedAttack, boolean newItem, User user) {
         if (newItem) {
             commitedAttack.setCreatedBy(user);
@@ -198,7 +197,7 @@ public class AttackWindow extends Window {
         unauthorizedResultService.save(commitedAttack.getUnauthorizedResults());
         attackService.save(commitedAttack);
     }
-
+    
     /**
      * Prepares the window to add a new attack
      *
@@ -209,7 +208,7 @@ public class AttackWindow extends Window {
         setCaption("Adding new attack");
         createAttackForm(new Attack(), attacksView, true);
     }
-
+    
     /**
      * Prepares the window to edit an existing attack
      *

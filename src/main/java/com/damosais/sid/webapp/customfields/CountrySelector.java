@@ -8,6 +8,7 @@ import org.tepi.filtertable.FilterTable;
 
 import com.neovisionaries.i18n.CountryCode;
 import com.vaadin.data.util.BeanItemContainer;
+import com.vaadin.data.validator.NullValidator;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.CustomField;
 import com.vaadin.ui.VerticalLayout;
@@ -28,7 +29,6 @@ public class CountrySelector extends CustomField<Set<CountryCode>> {
         table = new FilterTable();
         table.setSelectable(true);
         table.setMultiSelect(true);
-        table.setNullSelectionAllowed(nullable);
         table.setFilterBarVisible(true);
         // We add a column with the button to edit the conflict details
         table.setContainerDataSource(container);
@@ -38,6 +38,7 @@ public class CountrySelector extends CustomField<Set<CountryCode>> {
         
         content.setSpacing(true);
         content.addComponent(table);
+        setNullable(nullable);
     }
 
     @SuppressWarnings("unchecked")
@@ -69,6 +70,21 @@ public class CountrySelector extends CustomField<Set<CountryCode>> {
             for (final CountryCode country : countries) {
                 table.select(country);
             }
+        }
+    }
+    
+    /**
+     * This method allows to set if the null values are allowed or not
+     *
+     * @param nullable
+     *            The flag indicating if the null values are allowed
+     */
+    public void setNullable(boolean nullable) {
+        table.setNullSelectionAllowed(nullable);
+        if (nullable) {
+            table.removeAllValidators();
+        } else {
+            table.addValidator(new NullValidator("You need to select at least a country", false));
         }
     }
 }

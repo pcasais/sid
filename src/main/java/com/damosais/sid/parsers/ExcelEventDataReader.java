@@ -46,7 +46,7 @@ public class ExcelEventDataReader extends ExcelReader {
     private static final String SKIPPING_ROW = ". Skipping row";
     private static final String ITEM_SEPARATOR = ";";
     private static final String TRUE = "true";
-
+    
     /**
      * This method returns the attack corresponding to a row
      *
@@ -82,7 +82,7 @@ public class ExcelEventDataReader extends ExcelReader {
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.TOOL_NAME_FIELD);
         }
-        
+
         // 2nd) We then parse the results of the attack
         final UnauthorizedResult result = new UnauthorizedResult();
         // 2.1) The admin access flag
@@ -177,14 +177,14 @@ public class ExcelEventDataReader extends ExcelReader {
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.USER_ACCESS_FIELD);
         }
-        
+
         // 2.9) Finally we set the unauthorised results
         attack.setUnauthorizedResults(result);
         attack.setEvents(new HashSet<>());
-        
+
         return attack;
     }
-    
+
     /**
      * This method parses the fields related to an event
      *
@@ -216,7 +216,7 @@ public class ExcelEventDataReader extends ExcelReader {
             LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.DATE_FIELD + SKIPPING_ROW);
             error = true;
         }
-
+        
         // 2nd) We parse the action which is optional
         final Object actionRaw = rowContents.get(ImportEventDataWindow.ACTION_FIELD);
         if (isObjectANonEmptyString(actionRaw)) {
@@ -224,7 +224,7 @@ public class ExcelEventDataReader extends ExcelReader {
         } else {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.ACTION_FIELD);
         }
-
+        
         // 3rd) We now parse the owner of the target which is mandatory
         final Object ownerNameRaw = rowContents.get(ImportEventDataWindow.OWNER_NAME_FIELD);
         Owner owner = null;
@@ -259,7 +259,7 @@ public class ExcelEventDataReader extends ExcelReader {
             LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.OWNER_NAME_FIELD + SKIPPING_ROW);
             error = true;
         }
-
+        
         // 4th) We now parse the target of the event
         final Object targetSiteNameRaw = rowContents.get(ImportEventDataWindow.SITE_NAME_FIELD);
         if (isObjectANonEmptyString(targetSiteNameRaw)) {
@@ -285,10 +285,9 @@ public class ExcelEventDataReader extends ExcelReader {
             }
             event.setTarget(target);
         } else {
-            LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.SITE_NAME_FIELD + SKIPPING_ROW);
-            error = true;
+            LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.SITE_NAME_FIELD);
         }
-        
+
         // If we didn't had any fatal error then we returned the parsed object
         if (!error) {
             event.setRowNumber(rowNumber);
@@ -297,7 +296,7 @@ public class ExcelEventDataReader extends ExcelReader {
             return null;
         }
     }
-    
+
     /**
      * This method parses the incident fields of a row
      *
@@ -318,11 +317,11 @@ public class ExcelEventDataReader extends ExcelReader {
         if (incident != null) {
             return incident;
         }
-        
+
         // 2nd) If the incident hasn't been recorded then we create a new one
         incident = new Incident();
         incident.setName(StringUtils.trim((String) incidentNameRaw));
-        
+
         // 3rd) Now we try to map the motivation
         final Object motivationRaw = rowContents.get(ImportEventDataWindow.MOTIVATION_FIELD);
         if (isObjectANonEmptyString(motivationRaw)) {
@@ -331,7 +330,7 @@ public class ExcelEventDataReader extends ExcelReader {
         if (incident.getMotivation() == null) {
             LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.MOTIVATION_FIELD);
         }
-        
+
         // 4th) We now handle the attacker(s)
         incident.setAttackers(new HashSet<>());
         // 4.1) First we get the type of the attackers
@@ -346,7 +345,7 @@ public class ExcelEventDataReader extends ExcelReader {
         if (isObjectANonEmptyString(attackerCountryRaw)) {
             attackerCountry = CountryCode.getByCode(StringUtils.trim((String) attackerCountryRaw), false);
         }
-        
+
         // 4.3) Finally we read the names of the attackers and create the corresponding ones if needed
         final Object attackerNamesRaw = rowContents.get(ImportEventDataWindow.ATTACKER_NAME_FIELD);
         if (isObjectANonEmptyString(attackerNamesRaw)) {
@@ -365,7 +364,7 @@ public class ExcelEventDataReader extends ExcelReader {
         }
         return incident;
     }
-
+    
     /**
      * This method creates an event based on the data of the row
      *
@@ -383,23 +382,23 @@ public class ExcelEventDataReader extends ExcelReader {
     private Event processContentRow(int rowNumber, Row row, Map<Integer, String> columnMap, Map<String, Owner> ownersByName, Map<String, Target> targetsByName, Map<String, Tool> toolsByName, Map<String, Incident> incidentsByName, Map<String, Attacker> attackersByName) {
         // 1st) We get the content of the row
         final Map<String, Object> rowContents = readRowContent(row, columnMap);
-
+        
         // 2nd) Now we populate the event data
         final Event event = parseEventFields(rowNumber, rowContents, ownersByName, targetsByName);
-        
+
         // 3rd) After that we need to create the attack data
         if (event != null) {
             event.setAttack(parseAttackFiels(rowNumber, rowContents, toolsByName));
         }
-        
+
         // 4th) We then add the incident details
         if (event != null) {
             event.getAttack().setIncident(parseIncidentFields(rowNumber, rowContents, incidentsByName, attackersByName));
         }
-        
+
         return event;
     }
-    
+
     /**
      * This method reads the values from a file and processes them to insert them in the database
      *
@@ -428,7 +427,7 @@ public class ExcelEventDataReader extends ExcelReader {
         final Map<String, Tool> toolsByName = new HashMap<>(existingTools.stream().collect(Collectors.toMap(Tool::getName, Function.identity())));
         final Map<String, Incident> incidentsByName = new HashMap<>(existingIncidents.stream().collect(Collectors.toMap(Incident::getName, Function.identity())));
         final Map<String, Attacker> attackersByName = new HashMap<>(existingAttackers.stream().collect(Collectors.toMap(Attacker::getName, Function.identity())));
-        
+
         // 2nd) Now we start processing the rows
         final List<Event> events = new ArrayList<>();
         final XSSFSheet sheet = workbook.getSheet(sheetName);

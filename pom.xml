@@ -96,6 +96,11 @@
     		<artifactId>commons-math3</artifactId>
     		<version>3.2</version>
 		</dependency>
+		<dependency>
+			<groupId>net.sourceforge.jdistlib</groupId>
+    		<artifactId>jdistlib</artifactId>
+    		<version>0.4.5</version>
+		</dependency>
 	</dependencies>
 	
 	<repositories>

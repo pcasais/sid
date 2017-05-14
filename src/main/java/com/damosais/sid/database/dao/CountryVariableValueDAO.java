@@ -2,6 +2,7 @@ package com.damosais.sid.database.dao;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -20,7 +21,7 @@ import com.neovisionaries.i18n.CountryCode;
  */
 @Transactional
 public interface CountryVariableValueDAO extends CrudRepository<CountryVariableValue, Long> {
-
+    
     /**
      * Returns all the socioeconomic variable values for a specific country between the specific dates
      *
@@ -44,7 +45,7 @@ public interface CountryVariableValueDAO extends CrudRepository<CountryVariableV
      * @return A list of values ordered by year
      */
     public List<CountryVariableValue> findByCountryAndVariableOrderByDate(CountryCode country, SocioeconomicVariable variable);
-    
+
     /**
      * Returns the socioeconomic variable values of all countries for a specific year
      *
@@ -55,7 +56,7 @@ public interface CountryVariableValueDAO extends CrudRepository<CountryVariableV
      * @return A list of the different country values
      */
     public List<CountryVariableValue> findByVariableAndDate(SocioeconomicVariable variable, Date date);
-
+    
     /**
      * Returns the socioeconomic variable values for a given country between two given dates
      *
@@ -70,4 +71,13 @@ public interface CountryVariableValueDAO extends CrudRepository<CountryVariableV
      * @return A list of the different country variable values
      */
     public List<CountryVariableValue> findByVariableAndDateBetweenAndCountry(SocioeconomicVariable variable, Date startDate, Date endDate, CountryCode country);
+
+    /**
+     * Returns all the values for the given variables
+     * 
+     * @param variables
+     *            The variables for which we want to get the values
+     * @return A list of the different variable values
+     */
+    public List<CountryVariableValue> findByVariableIn(Set<SocioeconomicVariable> variables);
 }

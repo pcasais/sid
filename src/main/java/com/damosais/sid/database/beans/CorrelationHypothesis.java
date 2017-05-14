@@ -34,18 +34,22 @@ public class CorrelationHypothesis {
     @Column(name = "id")
     private Long id;
     
-    @Column(name = "startDate", nullable = false)
+    @Column(name = "startDate")
     private Date startDate;
     
-    @Column(name = "endDate", nullable = false)
+    @Column(name = "endDate")
     private Date endDate;
+    
+    @ManyToOne
+    @JoinColumn(name = "attackId")
+    private Conflict conflict;
     
     @Column(name = "sector", nullable = false)
     private Sector sector;
-    
-    @ElementCollection(fetch = FetchType.EAGER)
-    private Set<CountryCode> targetCountries;
-    
+
+    @Column(name = "targetCountry", nullable = false)
+    private CountryCode targetCountry;
+
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<CountryCode> sourceCountries;
     
@@ -83,11 +87,25 @@ public class CorrelationHypothesis {
             return false;
         }
         final CorrelationHypothesis other = (CorrelationHypothesis) obj;
+        if (startDate == null) {
+            if (other.startDate != null) {
+                return false;
+            }
+        } else if (!startDate.equals(other.startDate)) {
+            return false;
+        }
         if (endDate == null) {
             if (other.endDate != null) {
                 return false;
             }
         } else if (!endDate.equals(other.endDate)) {
+            return false;
+        }
+        if (conflict == null) {
+            if (other.conflict != null) {
+                return false;
+            }
+        } else if (!conflict.equals(other.conflict)) {
             return false;
         }
         if (sector != other.sector) {
@@ -100,11 +118,11 @@ public class CorrelationHypothesis {
         } else if (!sourceCountries.equals(other.sourceCountries)) {
             return false;
         }
-        if (targetCountries == null) {
-            if (other.targetCountries != null && !other.targetCountries.isEmpty()) {
+        if (targetCountry == null) {
+            if (other.targetCountry != null) {
                 return false;
             }
-        } else if (!targetCountries.equals(other.targetCountries)) {
+        } else if (targetCountry != other.targetCountry) {
             return false;
         }
         if (variables == null) {
@@ -116,7 +134,7 @@ public class CorrelationHypothesis {
         }
         return true;
     }
-
+    
     public double getBestCorrelation() {
         double bestResult = 0;
         if (results != null && !results.isEmpty()) {
@@ -128,13 +146,71 @@ public class CorrelationHypothesis {
         }
         return bestResult;
     }
+    
+    public Conflict getConflict() {
+        return conflict;
+    }
 
     public Date getCreated() {
         return created;
     }
-    
+
     public User getCreatedBy() {
         return createdBy;
+    }
+    
+    /**
+     * This method returns the effective end date to be used which is: if the hypothesis uses a conflict either the end date of it doesn't have one today, if is
+     * not based on a conflict then is end date defined
+     *
+     * @return The end date of the conflict (or today if none defined) or the end date if no conflict assigned
+     */
+    public Date getEffectiveEndDate() {
+        if (conflict != null) {
+            return conflict.getEnd() != null ? conflict.getEnd() : new Date();
+        } else {
+            return getEndDate();
+        }
+    }
+    
+    /**
+     * This method returns the countries involved in the attacks
+     *
+     * @return If the hypothesis is based on a conflict it returns the parties involved, otherwise the source countries defined
+     */
+    public Set<CountryCode> getEffectiveSourceCountries() {
+        if (conflict != null) {
+            return conflict.getPartiesInvolved();
+        } else {
+            return sourceCountries;
+        }
+    }
+    
+    /**
+     * This method returns the effective start date to be used which is: if the hypothesis uses a conflict either the start date, if is not based on a conflict
+     * then is start date defined
+     *
+     * @return The start date of the conflict r the start date if no conflict assigned
+     */
+    public Date getEffectiveStartDate() {
+        if (conflict != null) {
+            return conflict.getStart();
+        } else {
+            return getStartDate();
+        }
+    }
+    
+    /**
+     * This method returns the location where the conflict is taking place or if there's no conflict the selected target countries
+     *
+     * @return the location where the conflict is taking place or if there's no conflict the selected target countries
+     */
+    public CountryCode getEffectiveTargetCountry() {
+        if (conflict != null) {
+            return conflict.getLocation();
+        } else {
+            return getTargetCountry();
+        }
     }
     
     public Date getEndDate() {
@@ -148,7 +224,7 @@ public class CorrelationHypothesis {
     public Set<CorrelationResult> getResults() {
         return results;
     }
-    
+
     public Sector getSector() {
         return sector;
     }
@@ -161,18 +237,18 @@ public class CorrelationHypothesis {
         return startDate;
     }
     
-    public Set<CountryCode> getTargetCountries() {
-        return targetCountries;
+    public CountryCode getTargetCountry() {
+        return targetCountry;
     }
     
     public Date getUpdated() {
         return updated;
     }
-    
+
     public User getUpdatedBy() {
         return updatedBy;
     }
-
+    
     public Set<SocioeconomicVariable> getVariables() {
         return variables;
     }
@@ -181,12 +257,18 @@ public class CorrelationHypothesis {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + (startDate == null ? 0 : startDate.hashCode());
         result = prime * result + (endDate == null ? 0 : endDate.hashCode());
+        result = prime * result + (conflict == null ? 0 : conflict.hashCode());
         result = prime * result + (sector == null ? 0 : sector.hashCode());
         result = prime * result + (sourceCountries == null || sourceCountries.isEmpty() ? 0 : sourceCountries.hashCode());
-        result = prime * result + (targetCountries == null || targetCountries.isEmpty() ? 0 : targetCountries.hashCode());
+        result = prime * result + (targetCountry == null ? 0 : targetCountry.hashCode());
         result = prime * result + (variables == null ? 0 : variables.hashCode());
         return result;
+    }
+    
+    public void setConflict(Conflict conflict) {
+        this.conflict = conflict;
     }
     
     public void setCreated(Date created) {
@@ -216,13 +298,13 @@ public class CorrelationHypothesis {
     public void setSourceCountries(Set<CountryCode> sourceCountries) {
         this.sourceCountries = sourceCountries;
     }
-    
+
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
-
-    public void setTargetCountries(Set<CountryCode> targetCountries) {
-        this.targetCountries = targetCountries;
+    
+    public void setTargetCountry(CountryCode targetCountry) {
+        this.targetCountry = targetCountry;
     }
 
     public void setUpdated(Date updated) {

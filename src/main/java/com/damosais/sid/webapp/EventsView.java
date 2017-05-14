@@ -55,6 +55,7 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
     public EventsView() {
         setSpacing(true);
         setMargin(true);
+        setSizeFull();
     }
     
     @Override
@@ -128,6 +129,7 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
         // Now we add the table to the view
         addComponent(table);
         setComponentAlignment(table, Alignment.TOP_CENTER);
+        setExpandRatio(table, 1.0f);
     }
 
     /**
@@ -136,7 +138,9 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
     private void initializeTable() {
         // We create a table and set the source of data as the container
         table = new FilterTable();
+        table.setSizeFull();
         table.setFilterBarVisible(true);
+        table.setSortEnabled(true);
         // We add a column with the button to edit the attack details
         table.addGeneratedColumn(EDIT_BUTTON, this);
         // We add a column with the button to delete the attack
@@ -156,6 +160,12 @@ public class EventsView extends VerticalLayout implements View, ClickListener, C
         table.setColumnAlignment(DELETE_BUTTON, CustomTable.Align.CENTER);
         // We make the date field to be just year, month and day
         table.setConverter("date", new YearMonthDayDate());
+        // We then collapse the columns that have less value
+        table.setColumnCollapsingAllowed(true);
+        table.setColumnCollapsed("created", true);
+        table.setColumnCollapsed("createdBy.name", true);
+        table.setColumnCollapsed("updated", true);
+        table.setColumnCollapsed("updatedBy.name", true);
         // Now we refresh the content
         refreshTableContent();
     }

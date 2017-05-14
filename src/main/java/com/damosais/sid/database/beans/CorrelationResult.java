@@ -30,24 +30,30 @@ public class CorrelationResult {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Long id;
-
+    
     @Column(name = "country", nullable = false)
     private CountryCode country;
-
+    
     @Column(name = "variable", nullable = false)
     private SocioeconomicVariable variable;
-
+    
     @Column(name = "correlationCoefficient", nullable = false)
     private double correlationCoefficient;
-
+    
     @Column(name = "pValue", nullable = false)
     private double pValue;
-    
+
     @Column(name = "standardError", nullable = false)
     private double standardError;
-
+    
     @Column(name = "interpolated", nullable = false)
     private boolean interpolatedData;
+
+    @Column(name = "valuesNormality", nullable = false)
+    private double valuesNormality;
+
+    @Column(name = "eventsNormality", nullable = false)
+    private double eventsNormality;
     
     @CreationTimestamp
     @Column(name = "created")
@@ -56,11 +62,11 @@ public class CorrelationResult {
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
-
+    
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-
+    
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
@@ -68,7 +74,7 @@ public class CorrelationResult {
     public double getCorrelationCoefficient() {
         return correlationCoefficient;
     }
-    
+
     public CountryCode getCountry() {
         return country;
     }
@@ -76,11 +82,15 @@ public class CorrelationResult {
     public Date getCreated() {
         return created;
     }
-
+    
     public User getCreatedBy() {
         return createdBy;
     }
     
+    public double getEventsNormality() {
+        return eventsNormality;
+    }
+
     public Long getId() {
         return id;
     }
@@ -88,67 +98,79 @@ public class CorrelationResult {
     public double getpValue() {
         return pValue;
     }
-
+    
     public double getStandardError() {
         return standardError;
     }
-    
+
     public Date getUpdated() {
         return updated;
     }
-
+    
     public User getUpdatedBy() {
         return updatedBy;
+    }
+    
+    public double getValuesNormality() {
+        return valuesNormality;
     }
 
     public SocioeconomicVariable getVariable() {
         return variable;
     }
-
+    
     public boolean isInterpolatedData() {
         return interpolatedData;
     }
-
+    
     public void setCorrelationCoefficient(double correlationCoefficient) {
         this.correlationCoefficient = correlationCoefficient;
     }
-
+    
     public void setCountry(CountryCode country) {
         this.country = country;
     }
-
+    
     public void setCreated(Date created) {
         this.created = created;
     }
-
+    
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
-
+    
+    public void setEventsNormality(double eventsNormality) {
+        this.eventsNormality = eventsNormality;
+    }
+    
     public void setId(Long id) {
         this.id = id;
     }
-
+    
     public void setInterpolatedData(boolean interpolatedData) {
         this.interpolatedData = interpolatedData;
     }
-
+    
     public void setpValue(double pValue) {
         this.pValue = pValue;
     }
-
+    
     public void setStandardError(double standardError) {
         this.standardError = standardError;
     }
-
+    
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
-
+    
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
-
+    
+    public void setValuesNormality(double valuesNormality) {
+        this.valuesNormality = valuesNormality;
+    }
+    
     public void setVariable(SocioeconomicVariable variable) {
         this.variable = variable;
     }
