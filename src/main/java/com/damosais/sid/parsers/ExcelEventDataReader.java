@@ -285,7 +285,8 @@ public class ExcelEventDataReader extends ExcelReader {
             }
             event.setTarget(target);
         } else {
-            LOGGER.warn(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.SITE_NAME_FIELD);
+            LOGGER.error(THE_OBJECT_IN_ROW + rowNumber + HAS_AN_INVALID + ImportEventDataWindow.SITE_NAME_FIELD);
+            error = true;
         }
 
         // If we didn't had any fatal error then we returned the parsed object
@@ -313,7 +314,7 @@ public class ExcelEventDataReader extends ExcelReader {
     private Incident parseIncidentFields(int rowNumber, Map<String, Object> rowContents, Map<String, Incident> incidentsByName, Map<String, Attacker> attackersByName) {
         // 1st) We get the incident name and try to find if it was already defined
         final Object incidentNameRaw = rowContents.get(ImportEventDataWindow.INCIDENT_NAME_FIELD);
-        Incident incident = incidentsByName.get(incidentNameRaw);
+        Incident incident = incidentsByName.get(StringUtils.trim((String) incidentNameRaw));
         if (incident != null) {
             return incident;
         }
@@ -333,35 +334,62 @@ public class ExcelEventDataReader extends ExcelReader {
 
         // 4th) We now handle the attacker(s)
         incident.setAttackers(new HashSet<>());
-        // 4.1) First we get the type of the attackers
-        final Object attackerTypeRaw = rowContents.get(ImportEventDataWindow.ATTACKER_TYPE_FIELD);
-        AttackerType attackerType = null;
-        if (isObjectANonEmptyString(attackerTypeRaw)) {
-            attackerType = AttackerType.getByDescription(StringUtils.trim((String) attackerTypeRaw));
+        // 4.1) First we get the types of the attackers
+        final Object attackerTypesRaw = rowContents.get(ImportEventDataWindow.ATTACKER_TYPE_FIELD);
+        AttackerType[] attackerTypes = null;
+        if (isObjectANonEmptyString(attackerTypesRaw)) {
+            final String[] attackerTypesRawSplit = ((String) attackerTypesRaw).split(ITEM_SEPARATOR);
+            attackerTypes = new AttackerType[attackerTypesRawSplit.length];
+            int position = 0;
+            for (final String attackerTypeRaw : attackerTypesRawSplit) {
+                attackerTypes[position++] = AttackerType.getByDescription(StringUtils.trim(attackerTypeRaw));
+            }
+        } else {
+            attackerTypes = new AttackerType[0];
         }
-        // 4.2) We then get the country of the attackers
-        final Object attackerCountryRaw = rowContents.get(ImportEventDataWindow.ATTACKER_COUNTRY_FIELD);
-        CountryCode attackerCountry = null;
-        if (isObjectANonEmptyString(attackerCountryRaw)) {
-            attackerCountry = CountryCode.getByCode(StringUtils.trim((String) attackerCountryRaw), false);
+        // 4.2) We then get the countries of the attackers
+        final Object attackerCountriesRaw = rowContents.get(ImportEventDataWindow.ATTACKER_COUNTRY_FIELD);
+        CountryCode[] attackerCountries = null;
+        if (isObjectANonEmptyString(attackerCountriesRaw)) {
+            final String[] attackerCountriesRawSplit = ((String) attackerCountriesRaw).split(ITEM_SEPARATOR);
+            attackerCountries = new CountryCode[attackerCountriesRawSplit.length];
+            int position = 0;
+            for (final String attackerCountry : attackerCountriesRawSplit) {
+                attackerCountries[position++] = CountryCode.getByCode(StringUtils.trim(attackerCountry), false);
+            }
+        } else {
+            attackerCountries = new CountryCode[0];
         }
 
         // 4.3) Finally we read the names of the attackers and create the corresponding ones if needed
         final Object attackerNamesRaw = rowContents.get(ImportEventDataWindow.ATTACKER_NAME_FIELD);
         if (isObjectANonEmptyString(attackerNamesRaw)) {
+            final int position = 0;
             for (final String attackerName : ((String) attackerNamesRaw).split(ITEM_SEPARATOR)) {
                 Attacker attacker = attackersByName.get(StringUtils.trim(attackerName));
-                if (attacker == null) {
+                if (attacker == null && StringUtils.isNotBlank(attackerName)) {
                     // If the attacker didn't exist we create it
                     attacker = new Attacker();
                     attacker.setName(StringUtils.trim(attackerName));
-                    attacker.setCountry(attackerCountry != null ? attackerCountry : CountryCode.UNDEFINED);
-                    attacker.setType(attackerType != null ? attackerType : AttackerType.UNKNOWN);
+                    final CountryCode country = attackerCountries.length > position && attackerCountries[position] != null ? attackerCountries[position] : CountryCode.UNDEFINED;
+                    attacker.setCountry(country);
+                    final AttackerType type = attackerTypes.length > position && attackerTypes[position] != null ? attackerTypes[position] : AttackerType.UNKNOWN;
+                    attacker.setType(type);
                     attackersByName.put(attackerName, attacker);
                 }
-                incident.getAttackers().add(attacker);
+                if (attacker != null) {
+                    incident.getAttackers().add(attacker);
+                }
             }
         }
+
+        // 5th) We check that the incident is not just blank details if so we don't return an incident
+        if (StringUtils.isBlank(incident.getName()) && (incident.getMotivation() == null || Motivation.UNKNOWN == incident.getMotivation()) && incident.getAttackers().isEmpty()) {
+            incident = null;
+        } else if (incident.getName() != null && !incidentsByName.containsKey(incident.getName())) {
+            incidentsByName.put(incident.getName(), incident);
+        }
+
         return incident;
     }
     
