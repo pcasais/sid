@@ -52,22 +52,22 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
     private Button runAll;
     private Button deleteBlanks;
     private FilterTable table;
-    
+
     @Autowired
     private CorrelationHypothesisService correlationService;
-
-    @Autowired
-    private CorrelationHypothesisWindow correlationHypothesisWindow;
-
-    @Autowired
-    private CorrelationGenerateHypothesisWindow correlationGenerateHypothesisWindow;
     
     @Autowired
-    private CorrelationResultsWindow correlationResultsWindow;
+    private CorrelationHypothesisWindow correlationHypothesisWindow;
+    
+    @Autowired
+    private CorrelationGenerateHypothesisWindow correlationGenerateHypothesisWindow;
 
     @Autowired
+    private CorrelationResultsWindow correlationResultsWindow;
+    
+    @Autowired
     private CorrelationSearchWindow correlationSearchWindow;
-
+    
     /**
      * The constructor just enables the spacing and margins on the layout
      */
@@ -76,7 +76,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         setMargin(true);
         setSizeFull();
     }
-    
+
     @Override
     public void buttonClick(ClickEvent event) {
         final Button button = event.getButton();
@@ -120,7 +120,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
             }
         }
     }
-    
+
     private void createButtons() {
         final HorizontalLayout hl = new HorizontalLayout();
         addCorrelation = new Button("Add correlation hypothesis", this);
@@ -151,12 +151,12 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         addComponent(hl);
         setComponentAlignment(hl, Alignment.TOP_CENTER);
     }
-
+    
     @Override
     public void enter(ViewChangeEvent event) {
         // We do nothing on enter
     }
-
+    
     // This method generates the cells for the different buttons
     @Override
     public Object generateCell(CustomTable source, Object itemId, Object columnId) {
@@ -180,24 +180,33 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         // Finally we return the button
         return button;
     }
-
+    
     @Override
     public String getStyle(CustomTable source, Object itemId, Object propertyId) {
         final CorrelationHypothesis hypothesis = (CorrelationHypothesis) itemId;
+        // If the hypothesis has any results then we check the results to colour it
         if (hypothesis.getResults() != null && !hypothesis.getResults().isEmpty()) {
-            double maxCorrelationCoefficient = 0;
-            double pValue = 1;
+            double maxPearsonCorrelationCoefficient = 0;
+            double pValuePearson = 1;
+            double maxSpearmanCorrelationCoefficient = 0;
+            double pValueSpearman = 1;
             for (final CorrelationResult result : hypothesis.getResults()) {
-                final double correlationFactor = result.getCorrelationCoefficient();
-                final double resultPValue = result.getpValue();
-                if (Math.abs(correlationFactor) > Math.abs(maxCorrelationCoefficient) && (resultPValue < 0.05d || resultPValue < pValue)) {
-                    maxCorrelationCoefficient = correlationFactor;
-                    pValue = resultPValue;
+                final double correlationFactorPearson = result.getPearsonCorrelationCoefficient();
+                final double resultPValuePearson = result.getpValuePearson();
+                if (Math.abs(correlationFactorPearson) > Math.abs(maxPearsonCorrelationCoefficient) && (resultPValuePearson < CorrelationResult.NON_NULL_HYPOTHESIS_LEVEL || resultPValuePearson < pValuePearson)) {
+                    maxPearsonCorrelationCoefficient = correlationFactorPearson;
+                    pValuePearson = resultPValuePearson;
+                }
+                final double correlationFactorSpearman = result.getSpearmanCorrelationCoefficient();
+                final double resultPValueSpearman = result.getpValueSpearman();
+                if (Math.abs(correlationFactorSpearman) > Math.abs(maxSpearmanCorrelationCoefficient) && (resultPValueSpearman < CorrelationResult.NON_NULL_HYPOTHESIS_LEVEL || resultPValueSpearman < pValueSpearman)) {
+                    maxSpearmanCorrelationCoefficient = correlationFactorSpearman;
+                    pValueSpearman = resultPValueSpearman;
                 }
             }
-            if (Math.abs(maxCorrelationCoefficient) > 0.75d && pValue < 0.05d) {
+            if (Math.abs(maxPearsonCorrelationCoefficient) >= CorrelationResult.SIGNIFICATIVE_LEVEL && pValuePearson < CorrelationResult.NON_NULL_HYPOTHESIS_LEVEL || Math.abs(maxSpearmanCorrelationCoefficient) >= CorrelationResult.SIGNIFICATIVE_LEVEL && pValueSpearman < CorrelationResult.NON_NULL_HYPOTHESIS_LEVEL) {
                 return "green";
-            } else if (Math.abs(maxCorrelationCoefficient) > 0.75) {
+            } else if (Math.abs(maxPearsonCorrelationCoefficient) >= CorrelationResult.SIGNIFICATIVE_LEVEL || Math.abs(maxSpearmanCorrelationCoefficient) >= CorrelationResult.SIGNIFICATIVE_LEVEL) {
                 return "orange";
             } else {
                 return "red";
@@ -205,7 +214,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         }
         return null;
     }
-    
+
     /**
      * When we start the ConflictsView we create the table and the buttons
      */
@@ -220,7 +229,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         setComponentAlignment(table, Alignment.TOP_CENTER);
         setExpandRatio(table, 1.0f);
     }
-
+    
     /**
      * This method generates the table for first time, only to be called when initialising the table
      */
@@ -259,7 +268,7 @@ public class CorrelationsView extends VerticalLayout implements View, ClickListe
         // Now we refresh the content
         refreshTableContent();
     }
-
+    
     /**
      * It refreshes the content of the table
      */

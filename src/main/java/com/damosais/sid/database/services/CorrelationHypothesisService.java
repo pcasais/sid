@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.commons.math3.exception.MathIllegalArgumentException;
 import org.apache.commons.math3.exception.MathRuntimeException;
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,6 @@ import com.neovisionaries.i18n.CountryCode;
 import com.vaadin.ui.Notification;
 
 import net.sourceforge.jdistlib.disttest.NormalityTest;
-import net.sourceforge.jdistlib.exception.PrecisionException;
 import net.sourceforge.jdistlib.util.Utilities;
 
 /**
@@ -124,42 +123,72 @@ public class CorrelationHypothesisService {
                     result.setUpdatedBy(user);
                 }
                 // 5.1) First we generate a vector for the values of that variable
+                boolean errorInMatrix = false;
+                BlockRealMatrix matrix = null;
+                double[] valuesArray = null;
                 try {
-                    final double[] valuesArray = getValuesArray(valuesPerVariable.get(variable), timeBuckets, result);
-                    // 5.2) Now we generate the matrix with the data for the Rearson's correlation
-                    final BlockRealMatrix matrix = new BlockRealMatrix(timeBuckets.size(), 2);
+                    // 5.2) Now we generate the matrix with the data
+                    valuesArray = getValuesArray(valuesPerVariable.get(variable), timeBuckets, result);
+                    matrix = new BlockRealMatrix(timeBuckets.size(), 2);
                     matrix.setColumn(0, valuesArray);
                     matrix.setColumn(1, eventsArray);
-                    // 5.3) Then we calculate the correlation level and the P-Value
-                    final PearsonsCorrelation pearsonCorrelation = new PearsonsCorrelation(matrix);
-                    result.setCorrelationCoefficient(pearsonCorrelation.getCorrelationMatrix().getEntry(0, 1));
-                    result.setpValue(pearsonCorrelation.getCorrelationPValues().getEntry(0, 1));
-                    result.setStandardError(pearsonCorrelation.getCorrelationStandardErrors().getEntry(0, 1));
-                    if (Double.isNaN(result.getCorrelationCoefficient())) {
-                        result.setCorrelationCoefficient(0d);
+                } catch (final Exception e) {
+                    LOGGER.error("Problem generating matrix of data for the correlations: " + e.getMessage(), e);
+                    errors.add("Problem generating matrix of data for the correlations: " + e.getMessage());
+                    errorInMatrix = true;
+                }
+                
+                if (!errorInMatrix) {
+                    try {
+                        // 5.3) Then we calculate the Pearson's correlation level and the P-Value
+                        final PearsonsCorrelation pearsonCorrelation = new PearsonsCorrelation(matrix);
+                        result.setPearsonCorrelationCoefficient(pearsonCorrelation.getCorrelationMatrix().getEntry(0, 1));
+                        result.setpValuePearson(pearsonCorrelation.getCorrelationPValues().getEntry(0, 1));
+                        result.setStandardError(pearsonCorrelation.getCorrelationStandardErrors().getEntry(0, 1));
+                    } catch (final Exception e) {
+                        errors.add("Problem calculating Pearson's correlation coefficient for variable " + variable.getName() + " on " + country.getName() + " for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1) + ": " + e.getMessage());
+                        LOGGER.error("Failed to calculate Pearson's correlation coefficient for hypothesis coefficient for variable " + variable.getName() + " on " + country.getName() + " for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1) + ": " + e.getMessage(), e);
                     }
-                    if (Double.isNaN(result.getpValue())) {
-                        result.setpValue(1.0d);
+                    if (Double.isNaN(result.getPearsonCorrelationCoefficient())) {
+                        result.setPearsonCorrelationCoefficient(0d);
+                    }
+                    if (Double.isNaN(result.getpValuePearson())) {
+                        result.setpValuePearson(1.0d);
                     }
                     if (Double.isNaN(result.getStandardError())) {
                         result.setStandardError(1.0d);
                     }
-                    // 5.4) We calculate the normality of both data sets. To do that we need to sort the arrays before doing it
-                    Utilities.sort(valuesArray);
-                    Utilities.sort(eventsArray);
-                    if (valuesArray.length < 30) {
-                        result.setValuesNormality(NormalityTest.shapiro_wilk_statistic(valuesArray));
-                        result.setEventsNormality(NormalityTest.shapiro_wilk_statistic(eventsArray));
-                    } else {
-                        result.setValuesNormality(NormalityTest.kolmogorov_smirnov_statistic(valuesArray));
-                        result.setEventsNormality(NormalityTest.kolmogorov_smirnov_statistic(eventsArray));
+                    try {
+                        // 5.4) We then calculate the Spearman's correlation levels and the p-Value
+                        final SpearmansCorrelation spearmanCorrelation = new SpearmansCorrelation(matrix);
+                        result.setSpearmanCorrelationCoefficient(spearmanCorrelation.getCorrelationMatrix().getEntry(0, 1));
+                        result.setpValueSpearman(spearmanCorrelation.getRankCorrelation().getCorrelationPValues().getEntry(0, 1));
+                    } catch (final Exception e) {
+                        errors.add("Problem calculating Spearman's correlation coefficient for variable " + variable.getName() + " on " + country.getName() + " for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1) + ": " + e.getMessage());
+                        LOGGER.error("Failed to calculate Spearman's correlation coefficient for hypothesis coefficient for variable " + variable.getName() + " on " + country.getName() + " for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1) + ": " + e.getMessage(), e);
                     }
-                } catch (final MathIllegalArgumentException e) {
-                    errors.add("Problem with the correlation calculation for variable " + variable.getName() + " on " + country.getName() + ": interpolation of data for period " + timeBuckets.get(0) + " - " + timeBuckets.get(timeBuckets.size() - 1));
-                    LOGGER.error("Failed to calculate correlation for hypothesis " + e.getMessage(), e);
-                } catch (final PrecisionException e) {
-                    LOGGER.debug("Failure calculating the normality of the data distributions: " + e.getMessage(), e);
-                    // Do nothing
+                    if (Double.isNaN(result.getSpearmanCorrelationCoefficient())) {
+                        result.setSpearmanCorrelationCoefficient(0d);
+                    }
+                    if (Double.isNaN(result.getpValueSpearman())) {
+                        result.setpValueSpearman(0d);
+                    }
+                    
+                    try {
+                        // 5.5) We calculate the normality of both data sets. To do that we need to sort the arrays before doing it
+                        Utilities.sort(valuesArray);
+                        Utilities.sort(eventsArray);
+                        if (valuesArray.length < 30) {
+                            result.setValuesNormality(NormalityTest.shapiro_wilk_statistic(valuesArray));
+                            result.setEventsNormality(NormalityTest.shapiro_wilk_statistic(eventsArray));
+                        } else {
+                            result.setValuesNormality(NormalityTest.kolmogorov_smirnov_statistic(valuesArray));
+                            result.setEventsNormality(NormalityTest.kolmogorov_smirnov_statistic(eventsArray));
+                        }
+                    } catch (final Exception e) {
+                        errors.add("Failure calculating the normality of the data distrubutions: " + e.getMessage());
+                        LOGGER.debug("Failure calculating the normality of the data distributions: " + e.getMessage(), e);
+                    }
                 }
                 correlationResultDAO.save(result);
                 if (newItem) {
@@ -451,7 +480,7 @@ public class CorrelationHypothesisService {
      * @param result
      * @return An array with values for each time bucket
      */
-    private double[] getValuesArray(List<CountryVariableValue> variableValues, List<YearMonth> timeBuckets, CorrelationResult result) throws OutOfRangeException {
+    public double[] getValuesArray(List<CountryVariableValue> variableValues, List<YearMonth> timeBuckets, CorrelationResult result) throws OutOfRangeException {
         // 1st) We create the two arrays of known values and dates and a map for the values
         final double[] values = new double[variableValues.size()];
         final double[] dates = new double[variableValues.size()];

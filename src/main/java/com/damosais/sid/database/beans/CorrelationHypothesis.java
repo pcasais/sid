@@ -33,48 +33,48 @@ public class CorrelationHypothesis {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Long id;
-    
+
     @Column(name = "startDate")
     private Date startDate;
-    
+
     @Column(name = "endDate")
     private Date endDate;
-    
+
     @ManyToOne
     @JoinColumn(name = "attackId")
     private Conflict conflict;
-    
+
     @Column(name = "sector", nullable = false)
     private Sector sector;
-
+    
     @Column(name = "targetCountry", nullable = false)
     private CountryCode targetCountry;
-
+    
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<CountryCode> sourceCountries;
-    
+
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<SocioeconomicVariable> variables;
-    
+
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<CorrelationResult> results;
-    
+
     @CreationTimestamp
     @Column(name = "created")
     private Date created;
-    
+
     @ManyToOne
     @JoinColumn(name = "createdBy", nullable = false)
     private User createdBy;
-    
+
     @UpdateTimestamp
     @Column(name = "lastUpdate")
     private Date updated;
-    
+
     @ManyToOne
     @JoinColumn(name = "updatedBy")
     private User updatedBy;
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -134,31 +134,34 @@ public class CorrelationHypothesis {
         }
         return true;
     }
-    
+
     public double getBestCorrelation() {
         double bestResult = 0;
         if (results != null && !results.isEmpty()) {
             for (final CorrelationResult result : results) {
-                if (Math.abs(result.getCorrelationCoefficient()) > Math.abs(bestResult)) {
-                    bestResult = result.getCorrelationCoefficient();
+                if (Math.abs(result.getPearsonCorrelationCoefficient()) > Math.abs(bestResult)) {
+                    bestResult = result.getPearsonCorrelationCoefficient();
+                }
+                if (Math.abs(result.getSpearmanCorrelationCoefficient()) > Math.abs(bestResult)) {
+                    bestResult = result.getSpearmanCorrelationCoefficient();
                 }
             }
         }
         return bestResult;
     }
-    
+
     public Conflict getConflict() {
         return conflict;
     }
-
+    
     public Date getCreated() {
         return created;
     }
-
+    
     public User getCreatedBy() {
         return createdBy;
     }
-    
+
     /**
      * This method returns the effective end date to be used which is: if the hypothesis uses a conflict either the end date of it doesn't have one today, if is
      * not based on a conflict then is end date defined
@@ -172,7 +175,7 @@ public class CorrelationHypothesis {
             return getEndDate();
         }
     }
-    
+
     /**
      * This method returns the countries involved in the attacks
      *
@@ -185,7 +188,7 @@ public class CorrelationHypothesis {
             return sourceCountries;
         }
     }
-    
+
     /**
      * This method returns the effective start date to be used which is: if the hypothesis uses a conflict either the start date, if is not based on a conflict
      * then is start date defined
@@ -199,7 +202,7 @@ public class CorrelationHypothesis {
             return getStartDate();
         }
     }
-    
+
     /**
      * This method returns the location where the conflict is taking place or if there's no conflict the selected target countries
      *
@@ -212,47 +215,47 @@ public class CorrelationHypothesis {
             return getTargetCountry();
         }
     }
-    
+
     public Date getEndDate() {
         return endDate;
     }
-    
+
     public Long getId() {
         return id;
     }
-    
+
     public Set<CorrelationResult> getResults() {
         return results;
     }
-
+    
     public Sector getSector() {
         return sector;
     }
-    
+
     public Set<CountryCode> getSourceCountries() {
         return sourceCountries;
     }
-    
+
     public Date getStartDate() {
         return startDate;
     }
-    
+
     public CountryCode getTargetCountry() {
         return targetCountry;
     }
-    
+
     public Date getUpdated() {
         return updated;
     }
-
+    
     public User getUpdatedBy() {
         return updatedBy;
     }
-    
+
     public Set<SocioeconomicVariable> getVariables() {
         return variables;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -266,55 +269,55 @@ public class CorrelationHypothesis {
         result = prime * result + (variables == null ? 0 : variables.hashCode());
         return result;
     }
-    
+
     public void setConflict(Conflict conflict) {
         this.conflict = conflict;
     }
-    
+
     public void setCreated(Date created) {
         this.created = created;
     }
-    
+
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
-    
+
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public void setResults(Set<CorrelationResult> results) {
         this.results = results;
     }
-    
+
     public void setSector(Sector sector) {
         this.sector = sector;
     }
-    
+
     public void setSourceCountries(Set<CountryCode> sourceCountries) {
         this.sourceCountries = sourceCountries;
     }
-
+    
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
-    
+
     public void setTargetCountry(CountryCode targetCountry) {
         this.targetCountry = targetCountry;
     }
-
+    
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
-
+    
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
     }
-
+    
     public void setVariables(Set<SocioeconomicVariable> variables) {
         this.variables = variables;
     }

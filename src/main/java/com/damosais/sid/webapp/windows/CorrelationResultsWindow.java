@@ -3,9 +3,6 @@ package com.damosais.sid.webapp.windows;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.YearMonth;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,17 +11,16 @@ import org.tepi.filtertable.FilterTable;
 
 import com.damosais.sid.database.beans.CorrelationHypothesis;
 import com.damosais.sid.database.beans.CorrelationResult;
-import com.damosais.sid.database.beans.CountryVariableValue;
 import com.damosais.sid.database.services.CorrelationHypothesisService;
 import com.damosais.sid.database.services.CountryVariableValueService;
 import com.damosais.sid.webapp.GraphicResources;
 import com.vaadin.addon.charts.Chart;
-import com.vaadin.addon.charts.model.AxisType;
-import com.vaadin.addon.charts.model.ChartType;
 import com.vaadin.addon.charts.model.Configuration;
-import com.vaadin.addon.charts.model.ContainerDataSeries;
 import com.vaadin.addon.charts.model.DataSeries;
-import com.vaadin.addon.charts.model.DataSeriesItem;
+import com.vaadin.addon.charts.model.PlotOptionsSpline;
+import com.vaadin.addon.charts.model.XAxis;
+import com.vaadin.addon.charts.model.YAxis;
+import com.vaadin.addon.charts.model.ZoomType;
 import com.vaadin.data.util.BeanItem;
 import com.vaadin.data.util.BeanItemContainer;
 import com.vaadin.shared.ui.label.ContentMode;
@@ -72,37 +68,57 @@ public class CorrelationResultsWindow extends Window implements CellStyleGenerat
     }
     
     private void addGraphs(CorrelationResult resultToShow) {
-        // 1st) We generate the chart for the variable values
-        final ContainerDataSeries seriesValues = new ContainerDataSeries(new BeanItemContainer<>(CountryVariableValue.class, resultToShow != null ? countryVariableValueService.listByCountryAndVariable(resultToShow.getCountry(), resultToShow.getVariable()) : new ArrayList<>()));
-        seriesValues.setXPropertyId("date");
-        seriesValues.setYPropertyId("value");
-        seriesValues.setName(resultToShow != null ? resultToShow.getVariable().getName() : "No Data");
-        final Chart chartValues = new Chart(ChartType.SPLINE);
-        final Configuration chartValuesConfiguration = chartValues.getConfiguration();
-        chartValuesConfiguration.setTitle(resultToShow != null ? resultToShow.getCountry().getName() + " - " + resultToShow.getVariable().getName() : "No Data");
-        chartValuesConfiguration.getxAxis().setTitle("Date");
-        chartValuesConfiguration.getxAxis().setType(AxisType.DATETIME);
-        chartValuesConfiguration.getyAxis().setTitle(resultToShow != null ? resultToShow.getVariable().getName() + " (" + resultToShow.getVariable().getUnit() + ")" : "No Data");
-        chartValues.getConfiguration().addSeries(seriesValues);
-        graphLayout.addComponent(chartValues);
-        
-        // 2nd) We generate the graph for the events
-        final List<YearMonth> timeBuckets = correlationHypothesisService.generateTimeBuckets(correlationHypothesis);
-        final double[] events = correlationHypothesisService.getEventsDataArray(correlationHypothesisService.retrieveEventData(correlationHypothesis), timeBuckets);
-        final DataSeries eventsSeries = new DataSeries();
-        eventsSeries.setName("Events per month");
-        int i = 0;
-        for (final YearMonth timeBucket : timeBuckets) {
-            eventsSeries.add(new DataSeriesItem(Date.from(timeBucket.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant()), events[i++]));
+        // 1st) We create the chart
+        final Chart chart = new Chart();
+        final Configuration conf = chart.getConfiguration();
+        conf.getChart().setZoomType(ZoomType.XY);
+        conf.setTitle(resultToShow != null ? "Correlation between " + resultToShow.getVariable().getName() : "No result selected");
+
+        // 2nd) If a result has been selected then we add the data
+        if (resultToShow != null) {
+            // 2.1) First we generate the time buckets and with them we generate the X axis
+            final List<YearMonth> timeBuckets = correlationHypothesisService.generateTimeBuckets(correlationHypothesis);
+            final XAxis x = new XAxis();
+            for (final YearMonth timeBucket : timeBuckets) {
+                x.addCategory(timeBucket.toString());
+            }
+            conf.addxAxis(x);
+
+            // 2.2) We generate now the Y axis for both the events and the variable
+            final YAxis primary = new YAxis();
+            primary.setTitle(resultToShow.getVariable().getUnit());
+            conf.addyAxis(primary);
+            final YAxis secondary = new YAxis();
+            secondary.setTitle("Number of events");
+            conf.addyAxis(secondary);
+
+            // 2.3) We now get the data we used for both cases and add it
+            final DataSeries variableSeries = new DataSeries();
+            variableSeries.setPlotOptions(new PlotOptionsSpline());
+            variableSeries.setName(resultToShow.getVariable().getName());
+            final double[] values = correlationHypothesisService.getValuesArray(countryVariableValueService.listByCountryAndVariable(resultToShow.getCountry(), resultToShow.getVariable()), timeBuckets, resultToShow);
+            Number[] numbers = new Number[values.length];
+            int position = 0;
+            for (final double value : values) {
+                numbers[position++] = value;
+            }
+            variableSeries.setData(numbers);
+            conf.addSeries(variableSeries);
+            final DataSeries eventSeries = new DataSeries();
+            eventSeries.setPlotOptions(new PlotOptionsSpline());
+            eventSeries.setName("Events");
+            final double[] events = correlationHypothesisService.getEventsDataArray(correlationHypothesisService.retrieveEventData(correlationHypothesis), timeBuckets);
+            numbers = new Number[events.length];
+            position = 0;
+            for (final double event : events) {
+                numbers[position++] = event;
+            }
+            eventSeries.setData(numbers);
+            eventSeries.setyAxis(1);
+            conf.addSeries(eventSeries);
         }
-        final Chart chartEvents = new Chart(ChartType.SPLINE);
-        final Configuration chartEventsConfiguration = chartEvents.getConfiguration();
-        chartEventsConfiguration.setTitle(correlationHypothesis.getTargetCountry().getName() + " - Events per month");
-        chartEventsConfiguration.getxAxis().setTitle("Date");
-        chartEventsConfiguration.getxAxis().setType(AxisType.DATETIME);
-        chartEventsConfiguration.getyAxis().setTitle("Num. Events");
-        chartEvents.getConfiguration().addSeries(eventsSeries);
-        graphLayout.addComponent(chartEvents);
+        
+        graphLayout.addComponent(chart);
     }
     
     public void addValues(CorrelationHypothesis correlationHypothesis) {
@@ -140,8 +156,8 @@ public class CorrelationResultsWindow extends Window implements CellStyleGenerat
         table.setContainerDataSource(container);
 
         // Now we define which columns are visible and what are going to be their names in the table header
-        table.setVisibleColumns(new Object[] { "country.name", "variable", "correlationCoefficient", "pValue", "standardError", "interpolatedData", "valuesNormality", "eventsNormality", "created", "createdBy.name", "updated", "updatedBy.name", "graph" });
-        table.setColumnHeaders(new String[] { "Country", "Variable", "Correlation Coeficient", "P-Value", "Standard Error", "Data Interpolated", "Variable Normality", "Events Normality", "Created", "Created by", "Last update", "Last updated by", "Graph" });
+        table.setVisibleColumns(new Object[] { "country.name", "variable", "pearsonCorrelationCoefficient", "pValuePearson", "spearmanCorrelationCoefficient", "pValueSpearman", "standardError", "interpolatedData", "valuesNormality", "eventsNormality", "created", "createdBy.name", "updated", "updatedBy.name", "graph" });
+        table.setColumnHeaders(new String[] { "Country", "Variable", "Pearson's R", "Pearson P-Value", "Spearman's R", "Spearman P-Value", "Standard Error", "Data Interpolated", "Variable Normality", "Events Normality", "Created", "Created by", "Last update", "Last updated by", "Graph" });
         container.addAll(correlationHypothesis.getResults());
         table.setCellStyleGenerator(this);
         // We then collapse the columns that have less value
@@ -182,8 +198,8 @@ public class CorrelationResultsWindow extends Window implements CellStyleGenerat
     @Override
     public String getStyle(CustomTable source, Object itemId, Object propertyId) {
         final CorrelationResult result = (CorrelationResult) itemId;
-        final double correlationCoefficient = result.getCorrelationCoefficient();
-        final double pValue = result.getpValue();
+        final double correlationCoefficient = result.getPearsonCorrelationCoefficient();
+        final double pValue = result.getpValuePearson();
         if (Math.abs(correlationCoefficient) > 0.75d && pValue < 0.05d) {
             return "green";
         } else if (Math.abs(correlationCoefficient) > 0.75) {

@@ -100,7 +100,9 @@ public class CorrelationSearchWindow extends Window {
                     } else if (onlyRelevantCorrelations) {
                         boolean significant = false;
                         for (final CorrelationResult result : hypothesis.getResults()) {
-                            if (result.getCorrelationCoefficient() > 0.75 && result.getpValue() < 0.05) {
+                            final boolean pearsonSignificative = result.getPearsonCorrelationCoefficient() >= CorrelationResult.SIGNIFICATIVE_LEVEL && result.getpValuePearson() < CorrelationResult.NON_NULL_HYPOTHESIS_LEVEL;
+                            final boolean spearmanSignificative = result.getSpearmanCorrelationCoefficient() >= CorrelationResult.SIGNIFICATIVE_LEVEL && result.getpValueSpearman() < CorrelationResult.NON_NULL_HYPOTHESIS_LEVEL;
+                            if (pearsonSignificative || spearmanSignificative) {
                                 significant = true;
                                 break;
                             }

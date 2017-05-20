@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -236,27 +235,16 @@ public class ImportSocioeconomicDataWindow extends Window implements Receiver, U
      */
     private void processReadValues(List<CountryVariableValue> readValues) {
         // After we received some values is time to do a mix and see which ones are insert and which are updates
-        // 1st) We read the existing values and map them by socioeconomic variable and date
-        final Map<SocioeconomicVariable, Map<Date, CountryVariableValue>> mappedExistingValues = new HashMap<>();
-        for (final CountryVariableValue existingValue : countryVariableValueService.list()) {
-            Map<Date, CountryVariableValue> dateValues = mappedExistingValues.get(existingValue.getVariable());
-            if (dateValues == null) {
-                dateValues = new HashMap<>();
-                mappedExistingValues.put(existingValue.getVariable(), dateValues);
-            }
-            dateValues.put(existingValue.getDate(), existingValue);
-        }
+        // 1st) We read the existing values
+        final List<CountryVariableValue> existingValues = new ArrayList<>();
+        existingValues.addAll(countryVariableValueService.list());
 
         // 2nd) Now we loop through the parsed values and check if they need to become an update or an insert
         int valuesChanged = 0;
         final User user = ((WebApplication) getUI()).getUser();
         for (final CountryVariableValue readValue : readValues) {
             // 2.1) We try to find the matching value
-            CountryVariableValue matching = null;
-            final Map<Date, CountryVariableValue> dateValues = mappedExistingValues.get(readValue.getVariable());
-            if (dateValues != null) {
-                matching = dateValues.get(readValue.getDate());
-            }
+            final CountryVariableValue matching = existingValues.contains(readValue) ? existingValues.get(existingValues.indexOf(readValue)) : null;
             if (matching != null && readValue.getValue().compareTo(matching.getValue()) != 0) {
                 // 2.2) If is a match and the value is different we update the value and save it
                 matching.setValue(readValue.getValue());
@@ -267,6 +255,7 @@ public class ImportSocioeconomicDataWindow extends Window implements Receiver, U
                 // 2.3) If is a new value then we just put the data about its creator
                 readValue.setCreatedBy(user);
                 countryVariableValueService.save(readValue);
+                existingValues.add(readValue);
                 valuesChanged++;
             }
         }
